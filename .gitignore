@@ -19,6 +19,7 @@ yarn-error.log
 /informacion_util
 comandos.md
 start.ps1
+stop.ps1
 
 # Laravel storage logs & cache
 /storage/framework/cache/data/*
