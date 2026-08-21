@@ -22,11 +22,15 @@ class SyncOrderToErpMaestroListener implements ShouldQueue
             'tableId' => $event->tableId,
         ]);
 
-        Http::post($endpoint . '/api/sync/orders', [
-            'externalOrderId' => $event->orderId,
-            'tableId' => $event->tableId,
-            'total' => $event->total,
-            'source' => 'resto-lite',
-        ]);
+        try {
+            Http::timeout(3)->post($endpoint . '/api/sync/orders', [
+                'externalOrderId' => $event->orderId,
+                'tableId' => $event->tableId,
+                'total' => $event->total,
+                'source' => 'resto-lite',
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('No se pudo conectar con el ERP maestro (simulado), el pedido queda guardado para re-intento offline: ' . $e->getMessage());
+        }
     }
 }

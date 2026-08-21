@@ -18,6 +18,9 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
+        \App\Orders\Domain\OrderCreatedEvent::class => [
+            \App\Orders\Infrastructure\Queue\SyncOrderToErpMaestroListener::class,
+        ],
     ];
 
     /**

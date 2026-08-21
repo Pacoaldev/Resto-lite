@@ -3,7 +3,8 @@
     "require": {
         "php": "^8.3",
         "laravel/framework": "^10.0",
-        "predis/predis": "^2.2"
+        "predis/predis": "^2.2",
+        "guzzlehttp/guzzle": "^8.0"
     },
     "require-dev": {
         "pestphp/pest": "^2.0"
