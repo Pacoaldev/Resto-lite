@@ -1,21 +1,27 @@
 .inventoryView {
   h2 {
-    font-size: 1.2rem;
+    font-size: 1.35rem;
     font-weight: 800;
     color: #0f172a;
-    margin: 0 0 1rem;
+    margin: 0 0 1.25rem;
+    letter-spacing: -0.02em;
   }
 
   .error {
     color: #b91c1c;
     background: #fef2f2;
     border: 1px solid #fecaca;
-    border-radius: 10px;
-    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    padding: 0.85rem 1.1rem;
+    font-size: 0.88rem;
+    font-weight: 500;
   }
 
   .empty {
     color: #64748b;
+    font-weight: 500;
+    padding: 1.5rem;
+    text-align: center;
   }
 
   .inventory-table {
@@ -24,50 +30,62 @@
     border-spacing: 0;
     background: #fff;
     border: 1px solid #e2e8f0;
-    border-radius: 12px;
+    border-radius: 14px;
     overflow: hidden;
-  }
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
 
-  .inventory-table th,
-  .inventory-table td {
-    text-align: left;
-    padding: 0.8rem 1rem;
-    border-bottom: 1px solid #eef2f7;
-  }
+    th, td {
+      text-align: left;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 0.92rem;
+    }
 
-  .inventory-table tr:last-child td {
-    border-bottom: 0;
-  }
+    tr:last-child td {
+      border-bottom: 0;
+    }
 
-  .inventory-table th {
-    background: #f8fafc;
-    color: #475569;
-    font-weight: 700;
-    font-size: 0.78rem;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
+    th {
+      background: #f8fafc;
+      color: #475569;
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid #e2e8f0;
+    }
 
-  .inventory-table tbody tr:nth-child(even) {
-    background: #f8fafc;
+    tbody tr {
+      transition: all 0.15s ease;
+
+      &:hover td {
+        background: #f8fafc;
+      }
+    }
   }
 }
 
 .stock-badge {
   font-weight: 700;
-  padding: 0.25rem 0.55rem;
+  padding: 0.25rem 0.65rem;
   border-radius: 999px;
-  font-size: 0.78rem;
-  background-color: #dcfce7;
-  color: #166534;
+  font-size: 0.75rem;
+  background-color: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+  display: inline-flex;
+  align-items: center;
+
+  &.mid-stock {
+    background-color: #fff7ed;
+    color: #9a3412;
+    border: 1px solid #ffedd5;
+  }
+
+  &.low-stock {
+    background-color: #fff1f2;
+    color: #9f1239;
+    border: 1px solid #ffe4e6;
+  }
 }
 
-.stock-badge.mid-stock {
-  background-color: #ffedd5;
-  color: #c2410c;
-}
-
-.stock-badge.low-stock {
-  background-color: #fee2e2;
-  color: #b91c1c;
-}
