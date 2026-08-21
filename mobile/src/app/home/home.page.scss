@@ -1,0 +1,42 @@
+.header-section {
+  margin-bottom: 1.5rem;
+  h2 {
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: #111827;
+    margin: 0;
+  }
+  p {
+    margin: 0.2rem 0 0 0;
+    color: #6b7280;
+    font-size: 0.9rem;
+  }
+}
+
+.table-card {
+  margin: 0 0 1rem 0;
+  border-left: 6px solid #e5e7eb;
+  transition: transform 0.2s ease;
+
+  &.free {
+    border-left-color: #10b981;
+  }
+  &.occupied {
+    border-left-color: #f59e0b;
+  }
+  &.billRequested {
+    border-left-color: #ef4444;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.flex-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+}

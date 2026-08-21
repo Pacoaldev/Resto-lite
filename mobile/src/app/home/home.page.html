@@ -1,0 +1,38 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="dark">
+    <ion-title>
+      Resto Lite - Monitor de Sala
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" class="ion-padding">
+  <div class="header-section">
+    <h2>Tablero de Mesas</h2>
+    <p>Estado de sala en tiempo real.</p>
+  </div>
+
+  <ion-grid>
+    <ion-row>
+      @for (table of tables; track table.id) {
+        <ion-col size="12" size-sm="6">
+          <ion-card [class]="'table-card ' + table.status">
+            <ion-card-header>
+              <ion-card-title class="flex-title">
+                <span>{{ table.name }}</span>
+                <ion-badge [color]="statusColor(table.status)">
+                  {{ statusLabel(table.status) }}
+                </ion-badge>
+              </ion-card-title>
+            </ion-card-header>
+            <ion-card-content>
+              <p *ngIf="table.status === 'free'">Mesa libre. Lista para recibir comensales.</p>
+              <p *ngIf="table.status === 'occupied'">Comensales activos consumiendo.</p>
+              <p *ngIf="table.status === 'billRequested'">El cliente ha solicitado la cuenta.</p>
+            </ion-card-content>
+          </ion-card>
+        </ion-col>
+      }
+    </ion-row>
+  </ion-grid>
+</ion-content>
