@@ -25,7 +25,7 @@ describe('Tablero de Mesas y Toma de Pedidos E2E', () => {
     cy.contains('Mesa 1').should('be.visible');
 
     // Seleccionar mesa para tomar comandas
-    cy.contains('button', 'Tomar pedido').first().click();
+    cy.contains('Tomar pedido').first().click();
 
     // Validar panel de comanda
     cy.contains('Nuevo pedido - mesa 1').should('be.visible');

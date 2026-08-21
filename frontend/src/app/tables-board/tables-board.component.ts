@@ -2,13 +2,13 @@ import { Component, OnInit, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
-import { ButtonModule } from 'primeng/button';
+import { Button } from 'primeng/button';
 import { OrdersService, RestaurantTable } from '../core/orders.service';
 
 @Component({
   selector: 'app-tables-board',
   standalone: true,
-  imports: [CommonModule, TableModule, TagModule, ButtonModule],
+  imports: [CommonModule, TableModule, TagModule, Button],
   templateUrl: './tables-board.component.html',
   styleUrl: './tables-board.component.scss',
 })

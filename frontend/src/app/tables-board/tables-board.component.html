@@ -3,21 +3,21 @@
   <p class="description">Selecciona una mesa libre para tomar comandas o gestionar una orden activa.</p>
 
   <p-table [value]="tables">
-    <ng-template pTemplate="header">
+    <ng-template #header>
       <tr>
         <th>Mesa</th>
         <th>Estado</th>
         <th></th>
       </tr>
     </ng-template>
-    <ng-template pTemplate="body" let-table>
+    <ng-template #body let-table>
       <tr>
         <td>{{ table.name }}</td>
         <td>
           <p-tag [value]="statusLabel(table.status)" [severity]="statusSeverity(table.status)"></p-tag>
         </td>
         <td>
-          <button pButton label="Tomar pedido" class="p-button-sm" (click)="onSelectTable(table.id)"></button>
+          <p-button label="Tomar pedido" size="small" (onClick)="onSelectTable(table.id)" />
         </td>
       </tr>
     </ng-template>

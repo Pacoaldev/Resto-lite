@@ -1,14 +1,13 @@
 import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ButtonModule } from 'primeng/button';
-import { InputNumberModule } from 'primeng/inputnumber';
+import { Button } from 'primeng/button';
 import { OrderItem, OrdersService, Product } from '../core/orders.service';
 
 @Component({
   selector: 'app-order-taking',
   standalone: true,
-  imports: [CommonModule, FormsModule, ButtonModule, InputNumberModule],
+  imports: [CommonModule, FormsModule, Button],
   templateUrl: './order-taking.component.html',
   styleUrl: './order-taking.component.scss',
 })
