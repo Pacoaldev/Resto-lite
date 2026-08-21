@@ -1,0 +1,150 @@
+openapi: 3.0.3
+info:
+  title: Resto Lite API
+  description: API REST para el módulo Lite de gestión de pedidos y mesas.
+  version: 1.0.0
+paths:
+  /api/tables:
+    get:
+      summary: Listar mesas
+      description: Obtiene el listado de mesas del restaurante con su estado de ocupación actual.
+      responses:
+        '200':
+          description: Listado de mesas obtenido con éxito.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Table'
+
+  /api/products:
+    get:
+      summary: Listar productos del menú
+      description: Obtiene la lista de productos disponibles para la toma de pedidos.
+      responses:
+        '200':
+          description: Listado de productos obtenido con éxito.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+  /api/orders:
+    post:
+      summary: Crear un pedido
+      description: Crea un nuevo pedido asociado a una mesa específica.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tableId
+                - items
+              properties:
+                tableId:
+                  type: integer
+                  example: 1
+                items:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/OrderItemInput'
+      responses:
+        '201':
+          description: Pedido creado con éxito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+
+  /api/orders/{id}/status:
+    patch:
+      summary: Cambiar estado de un pedido
+      description: Actualiza el estado actual de un pedido.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [open, sent, paid, cancelled]
+                  example: sent
+      responses:
+        '200':
+          description: Estado del pedido actualizado con éxito.
+
+components:
+  schemas:
+    Table:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        status:
+          type: string
+          enum: [free, occupied, billRequested]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        price:
+          type: number
+          format: float
+        stock:
+          type: integer
+
+    OrderItemInput:
+      type: object
+      required:
+        - name
+        - price
+        - quantity
+      properties:
+        name:
+          type: string
+        price:
+          type: number
+          format: float
+        quantity:
+          type: integer
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+        tableId:
+          type: integer
+        status:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItemInput'

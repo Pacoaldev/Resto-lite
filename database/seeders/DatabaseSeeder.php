@@ -2,21 +2,33 @@
 
 namespace Database\Seeders;
 
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // \App\Models\User::factory(10)->create();
+        // Limpiar datos
+        DB::table('orders')->truncate();
+        DB::table('tables')->delete();
+        DB::table('products')->delete();
 
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        // Población de Mesas
+        DB::table('tables')->insert([
+            ['id' => 1, 'name' => 'Mesa 1', 'status' => 'free', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'name' => 'Mesa 2', 'status' => 'occupied', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 3, 'name' => 'Mesa 3', 'status' => 'free', 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 4, 'name' => 'Mesa 4', 'status' => 'billRequested', 'created_at' => now(), 'updated_at' => now()],
+        ]);
+
+        // Población de Productos/Menú
+        DB::table('products')->insert([
+            ['id' => 1, 'name' => 'Café', 'price' => 2.50, 'stock' => 99, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 2, 'name' => 'Tostada', 'price' => 3.00, 'stock' => 50, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 3, 'name' => 'Zumo natural', 'price' => 4.00, 'stock' => 20, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 4, 'name' => 'Cerveza', 'price' => 2.80, 'stock' => 150, 'created_at' => now(), 'updated_at' => now()],
+            ['id' => 5, 'name' => 'Hamburguesa', 'price' => 12.00, 'stock' => 30, 'created_at' => now(), 'updated_at' => now()],
+        ]);
     }
 }
