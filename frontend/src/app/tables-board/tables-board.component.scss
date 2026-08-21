@@ -83,4 +83,45 @@
   .action-btn:hover {
     background: #16304f;
   }
+
+  .action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .action-btn.secondary {
+    background: #475569;
+  }
+
+  .action-btn.settle {
+    background: #166534;
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .bill-panel {
+    margin-top: 1.25rem;
+    padding: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+  }
+
+  .bill-panel h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+  }
+
+  .bill-panel ul {
+    margin: 0 0 0.75rem;
+    padding-left: 1.1rem;
+  }
+
+  .bill-total {
+    margin: 0 0 0.75rem;
+  }
 }

@@ -12,6 +12,7 @@ import { InventoryViewComponent } from './inventory-view/inventory-view.componen
 export class App {
   readonly selectedTableId = signal<number | null>(null);
   readonly inventoryTick = signal(0);
+  readonly tablesTick = signal(0);
 
   onSelectTable(tableId: number): void {
     this.selectedTableId.set(tableId);
@@ -20,5 +21,6 @@ export class App {
   onOrderPlaced(): void {
     this.selectedTableId.set(null);
     this.inventoryTick.update((n) => n + 1);
+    this.tablesTick.update((n) => n + 1);
   }
 }

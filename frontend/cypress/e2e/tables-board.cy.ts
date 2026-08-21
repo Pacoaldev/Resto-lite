@@ -16,6 +16,18 @@ describe('Tablero de Mesas y Toma de Pedidos E2E', () => {
       body: { id: 99, tableId: 1, status: 'open', total: 5.50 }
     }).as('createOrder');
 
+    cy.intercept('POST', '/api/tables/*/request-bill', {
+      statusCode: 200,
+      body: {
+        tableId: 2,
+        orderIds: [1],
+        items: [{ name: 'Café', price: 2.5, quantity: 1 }],
+        total: 2.5,
+      },
+    }).as('requestBill');
+
+    cy.intercept('POST', '/api/tables/*/settle', { statusCode: 204 }).as('settle');
+
     cy.visit('/');
   });
 
@@ -40,5 +52,14 @@ describe('Tablero de Mesas y Toma de Pedidos E2E', () => {
 
     // Verificar panel reseteado
     cy.contains('Selecciona una mesa en el tablero').should('be.visible');
+  });
+
+  it('permite pedir cuenta y cobrar en mesa ocupada', () => {
+    cy.wait('@getTables');
+    cy.contains('button', 'Pedir cuenta').click();
+    cy.wait('@requestBill');
+    cy.contains('Cuenta — mesa 2').should('be.visible');
+    cy.contains('button', 'Cobrar y liberar mesa').click();
+    cy.wait('@settle');
   });
 });

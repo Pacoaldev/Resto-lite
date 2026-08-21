@@ -23,6 +23,13 @@ export interface RestaurantTable {
   status: 'free' | 'occupied' | 'billRequested';
 }
 
+export interface TableBill {
+  tableId: number;
+  orderIds: number[];
+  items: OrderItem[];
+  total: number;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -72,6 +79,14 @@ export class OrdersService {
 
   updateStatus(orderId: number, status: string): Observable<void> {
     return this.http.patch<void>(`${this.baseUrl}/orders/${orderId}/status`, { status });
+  }
+
+  requestBill(tableId: number): Observable<TableBill> {
+    return this.http.post<TableBill>(`${this.baseUrl}/tables/${tableId}/request-bill`, {});
+  }
+
+  settleTable(tableId: number): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/tables/${tableId}/settle`, {});
   }
 
   private saveOffline(orderData: { tableId: number; items: OrderItem[] }): void {

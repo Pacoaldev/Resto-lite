@@ -36,7 +36,10 @@
       <div class="grid">
         <!-- Tables Board (Left column) -->
         <div class="col-8">
-          <app-tables-board (selectTable)="onSelectTable($event)"></app-tables-board>
+          <app-tables-board
+            [refreshKey]="tablesTick()"
+            (selectTable)="onSelectTable($event)">
+          </app-tables-board>
         </div>
 
         <!-- Right Side Panel (Order taking / Info) -->

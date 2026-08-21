@@ -6,6 +6,7 @@ use App\Orders\Domain\InsufficientStockException;
 use App\Orders\Domain\Order;
 use App\Orders\Domain\OrderCreatedEvent;
 use App\Orders\Domain\OrderRepositoryInterface;
+use App\Orders\Domain\TableStatus;
 use Illuminate\Support\Facades\DB;
 
 class CreateOrderUseCase
@@ -22,6 +23,11 @@ class CreateOrderUseCase
 
             $order = new Order(tableId: $tableId, items: $items);
             $order = $this->orderRepository->save($order);
+
+            DB::table('tables')->where('id', $tableId)->update([
+                'status' => TableStatus::Occupied->value,
+                'updated_at' => now(),
+            ]);
 
             event(new OrderCreatedEvent(
                 orderId: $order->getId(),
