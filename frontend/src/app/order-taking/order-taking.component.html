@@ -5,14 +5,20 @@
     <div class="itemRow">
       <span class="itemName">{{ item.name }}</span>
       <span class="itemPrice">{{ item.price | currency:'EUR':'symbol':'1.2-2' }}</span>
+      <span class="itemStock">max {{ item.stock }}</span>
       <input
         type="number"
         min="0"
+        [max]="item.stock"
         class="qty-input"
         [value]="quantities()[item.name] ?? 0"
-        (input)="setQuantity(item.name, $any($event.target).value)"
+        (input)="setQuantity(item, $any($event.target).value)"
       />
     </div>
+  }
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
   }
 
   <button type="button" class="submit-btn" [disabled]="saving()" (click)="submitOrder()">

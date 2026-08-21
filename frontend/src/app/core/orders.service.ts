@@ -50,6 +50,11 @@ export class OrdersService {
   createOrder(tableId: number, items: OrderItem[]): Observable<Order> {
     return this.http.post<Order>(`${this.baseUrl}/orders`, { tableId, items }).pipe(
       catchError((error) => {
+        // Solo caer a offline ante fallo de red; 4xx/5xx del API deben propagarse
+        if (error?.status > 0) {
+          return throwError(() => error);
+        }
+
         console.warn('Network error detected. Saving order locally for offline synchronization...', error);
         this.saveOffline({ tableId, items });
         // Simular respuesta exitosa para el flujo UI local

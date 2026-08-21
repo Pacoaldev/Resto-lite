@@ -1,12 +1,11 @@
 import { Component, input, OnInit, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { OrderItem, OrdersService, Product } from '../core/orders.service';
 
 @Component({
   selector: 'app-order-taking',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule],
   templateUrl: './order-taking.component.html',
   styleUrl: './order-taking.component.scss',
 })
@@ -17,6 +16,7 @@ export class OrderTakingComponent implements OnInit {
   readonly availableItems = signal<Product[]>([]);
   readonly quantities = signal<Record<string, number>>({});
   readonly saving = signal(false);
+  readonly error = signal<string | null>(null);
 
   constructor(private ordersService: OrdersService) {}
 
@@ -38,12 +38,16 @@ export class OrderTakingComponent implements OnInit {
     });
   }
 
-  setQuantity(name: string, value: string | number): void {
+  setQuantity(product: Product, value: string | number): void {
     const n = typeof value === 'number' ? value : Number(value);
-    this.quantities.update((q) => ({ ...q, [name]: Number.isFinite(n) ? n : 0 }));
+    const safe = Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0;
+    const clamped = Math.min(safe, product.stock);
+    this.quantities.update((q) => ({ ...q, [product.name]: clamped }));
+    this.error.set(null);
   }
 
   submitOrder(): void {
+    this.error.set(null);
     const qty = this.quantities();
     const items: OrderItem[] = this.availableItems()
       .filter((item) => (qty[item.name] ?? 0) > 0)
@@ -54,6 +58,15 @@ export class OrderTakingComponent implements OnInit {
       }));
 
     if (items.length === 0) {
+      return;
+    }
+
+    const overstock = items.find((item) => {
+      const product = this.availableItems().find((p) => p.name === item.name);
+      return !product || item.quantity > product.stock;
+    });
+    if (overstock) {
+      this.error.set(`Stock insuficiente para ${overstock.name}`);
       return;
     }
 
@@ -69,8 +82,10 @@ export class OrderTakingComponent implements OnInit {
         this.saving.set(false);
         this.orderPlaced.emit();
       },
-      error: () => {
+      error: (err) => {
         this.saving.set(false);
+        const message = err?.error?.message;
+        this.error.set(typeof message === 'string' ? message : 'No se pudo enviar el pedido');
       },
     });
   }

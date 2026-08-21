@@ -4,6 +4,7 @@ namespace App\Orders\Infrastructure\Http;
 
 use App\Orders\Application\ChangeOrderStatusUseCase;
 use App\Orders\Application\CreateOrderUseCase;
+use App\Orders\Domain\InsufficientStockException;
 use App\Orders\Domain\OrderStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -27,10 +28,14 @@ class OrderController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        $order = $this->createOrderUseCase->execute(
-            tableId: $validated['tableId'],
-            items: $validated['items']
-        );
+        try {
+            $order = $this->createOrderUseCase->execute(
+                tableId: $validated['tableId'],
+                items: $validated['items']
+            );
+        } catch (InsufficientStockException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
 
         return response()->json([
             'id' => $order->getId(),

@@ -26,11 +26,26 @@
   font-size: 0.9rem;
 }
 
+.itemStock {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  min-width: 4.5rem;
+}
+
 .qty-input {
   width: 80px;
   padding: 0.35rem 0.5rem;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
+}
+
+.error {
+  margin-top: 1rem;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
 }
 
 .submit-btn {
