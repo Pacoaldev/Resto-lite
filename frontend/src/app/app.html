@@ -1,0 +1,63 @@
+<div class="resto-app">
+  <!-- Top Navigation Header -->
+  <header class="resto-header">
+    <div class="logo">
+      <span class="brand">RESTO</span>
+      <span class="lite-badge">Lite</span>
+    </div>
+    <div class="system-status">
+      <i class="pi pi-check-circle text-green-500"></i>
+      <span>Sincronizado con ERP Maestro</span>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="main-layout">
+    <!-- Sidebar Navigation / Actions -->
+    <aside class="sidebar">
+      <div class="nav-section">
+        <h3>OPERATIVA</h3>
+        <button class="nav-btn active">
+          <i class="pi pi-th-large"></i>
+          <span>Mesas y Pedidos</span>
+        </button>
+      </div>
+      <div class="nav-section mt-4">
+        <h3>ESTABLECIMIENTO</h3>
+        <div class="location-card">
+          <h4>Sucursal LATAM</h4>
+          <p>Restaurante Principal</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Workspace Grid -->
+    <main class="workspace">
+      <div class="grid">
+        <!-- Tables Board (Left column) -->
+        <div class="col-8">
+          <app-tables-board (selectTable)="onSelectTable($event)"></app-tables-board>
+        </div>
+
+        <!-- Right Side Panel (Order taking / Info) -->
+        <div class="col-4">
+          <div *ngIf="selectedTableId" class="side-panel-card animated-fade-in">
+            <app-order-taking 
+              [tableId]="selectedTableId"
+              (orderPlaced)="onOrderPlaced()">
+            </app-order-taking>
+          </div>
+          <div *ngIf="!selectedTableId" class="side-panel-card empty-panel">
+            <i class="pi pi-shopping-cart empty-icon"></i>
+            <p>Selecciona una mesa en el tablero para comenzar a tomar comandas.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Inventory Section -->
+      <div class="inventory-section mt-4">
+        <app-inventory-view></app-inventory-view>
+      </div>
+    </main>
+  </div>
+</div>

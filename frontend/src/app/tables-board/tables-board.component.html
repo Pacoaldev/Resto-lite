@@ -1,5 +1,6 @@
-<div class="tablesBoard">
-  <h2>Mesas</h2>
+<div class="tablesBoard card">
+  <h2>Tablero de Mesas</h2>
+  <p class="description">Selecciona una mesa libre para tomar comandas o gestionar una orden activa.</p>
 
   <p-table [value]="tables">
     <ng-template pTemplate="header">
@@ -16,7 +17,7 @@
           <p-tag [value]="statusLabel(table.status)" [severity]="statusSeverity(table.status)"></p-tag>
         </td>
         <td>
-          <button pButton label="Tomar pedido" class="p-button-sm"></button>
+          <button pButton label="Tomar pedido" class="p-button-sm" (click)="onSelectTable(table.id)"></button>
         </td>
       </tr>
     </ng-template>

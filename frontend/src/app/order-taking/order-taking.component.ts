@@ -1,9 +1,9 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { OrderItem, OrdersService } from '../core/orders.service';
+import { OrderItem, OrdersService, Product } from '../core/orders.service';
 
 @Component({
   selector: 'app-order-taking',
@@ -12,19 +12,26 @@ import { OrderItem, OrdersService } from '../core/orders.service';
   templateUrl: './order-taking.component.html',
   styleUrl: './order-taking.component.scss',
 })
-export class OrderTakingComponent {
+export class OrderTakingComponent implements OnInit {
   @Input({ required: true }) tableId!: number;
+  @Output() orderPlaced = new EventEmitter<void>();
 
-  availableItems = [
-    { name: 'Cafe', price: 2.5 },
-    { name: 'Tostada', price: 3.0 },
-    { name: 'Zumo natural', price: 4.0 },
-  ];
-
+  availableItems: Product[] = [];
   quantities: Record<string, number> = {};
   saving = false;
 
   constructor(private ordersService: OrdersService) {}
+
+  ngOnInit(): void {
+    this.loadProducts();
+  }
+
+  loadProducts(): void {
+    this.ordersService.getProducts().subscribe({
+      next: (data) => (this.availableItems = data),
+      error: (err) => console.error('Error al cargar productos:', err),
+    });
+  }
 
   submitOrder(): void {
     const items: OrderItem[] = this.availableItems
@@ -45,6 +52,7 @@ export class OrderTakingComponent {
       next: () => {
         this.quantities = {};
         this.saving = false;
+        this.orderPlaced.emit();
       },
       error: () => {
         this.saving = false;

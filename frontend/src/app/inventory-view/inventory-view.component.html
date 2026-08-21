@@ -1,0 +1,23 @@
+<div class="inventoryView card">
+  <h2>Control de Stock / Inventario</h2>
+  <p-table [value]="products" styleClass="p-datatable-striped">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Producto</th>
+        <th>Precio</th>
+        <th>Stock Disponible</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-product>
+      <tr>
+        <td>{{ product.name }}</td>
+        <td>{{ product.price | currency:'EUR':'symbol':'1.2-2' }}</td>
+        <td>
+          <span [class.low-stock]="product.stock < 10" class="stock-badge">
+            {{ product.stock }} uds
+          </span>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
