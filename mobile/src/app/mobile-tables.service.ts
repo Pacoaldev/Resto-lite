@@ -8,12 +8,15 @@ export interface MobileTable {
   status: 'free' | 'occupied' | 'billRequested';
 }
 
+import { inject } from '@angular/core';
+
 @Injectable({ providedIn: 'root' })
 export class MobileTablesService {
   // En producción apuntaría a la IP del servidor Laravel, para demo local usa /api
   private readonly apiUrl = 'http://localhost:8080/api/tables';
+  private readonly http = inject(HttpClient);
 
-  constructor(private http: HttpClient) {}
+  constructor() {}
 
   getTables(): Observable<MobileTable[]> {
     return this.http.get<MobileTable[]>(this.apiUrl);

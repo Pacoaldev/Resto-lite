@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonHeader, IonToolbar, IonTitle, IonContent, IonGrid, IonRow, IonCol, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonBadge } from '@ionic/angular';
 import { MobileTablesService, MobileTable } from '../mobile-tables.service';
@@ -26,8 +26,9 @@ import { MobileTablesService, MobileTable } from '../mobile-tables.service';
 })
 export class HomePage implements OnInit {
   tables: MobileTable[] = [];
+  private readonly tablesService = inject(MobileTablesService);
 
-  constructor(private tablesService: MobileTablesService) {}
+  constructor() {}
 
   ngOnInit(): void {
     this.loadTables();

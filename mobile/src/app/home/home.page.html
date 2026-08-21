@@ -26,9 +26,13 @@
               </ion-card-title>
             </ion-card-header>
             <ion-card-content>
-              <p *ngIf="table.status === 'free'">Mesa libre. Lista para recibir comensales.</p>
-              <p *ngIf="table.status === 'occupied'">Comensales activos consumiendo.</p>
-              <p *ngIf="table.status === 'billRequested'">El cliente ha solicitado la cuenta.</p>
+              @if (table.status === 'free') {
+                <p>Mesa libre. Lista para recibir comensales.</p>
+              } @else if (table.status === 'occupied') {
+                <p>Comensales activos consumiendo.</p>
+              } @else if (table.status === 'billRequested') {
+                <p>El cliente ha solicitado la cuenta.</p>
+              }
             </ion-card-content>
           </ion-card>
         </ion-col>
