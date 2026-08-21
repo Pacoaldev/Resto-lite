@@ -1,19 +1,16 @@
-import { Component, OnInit, EventEmitter, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { TableModule } from 'primeng/table';
+import { Component, OnInit, output, signal } from '@angular/core';
 import { OrdersService, RestaurantTable } from '../core/orders.service';
 
 @Component({
   selector: 'app-tables-board',
   standalone: true,
-  imports: [CommonModule, TableModule],
   templateUrl: './tables-board.component.html',
   styleUrl: './tables-board.component.scss',
 })
 export class TablesBoardComponent implements OnInit {
-  tables: RestaurantTable[] = [];
-
-  @Output() selectTable = new EventEmitter<number>();
+  readonly tables = signal<RestaurantTable[]>([]);
+  readonly loadError = signal<string | null>(null);
+  readonly selectTable = output<number>();
 
   constructor(private ordersService: OrdersService) {}
 
@@ -22,9 +19,14 @@ export class TablesBoardComponent implements OnInit {
   }
 
   loadTables(): void {
+    this.loadError.set(null);
     this.ordersService.getTables().subscribe({
-      next: (data) => (this.tables = data),
-      error: (err) => console.error('Error al cargar mesas:', err),
+      next: (data) => this.tables.set(data ?? []),
+      error: (err) => {
+        console.error('Error al cargar mesas:', err);
+        this.tables.set([]);
+        this.loadError.set('No se pudieron cargar las mesas. ¿Está el backend en http://localhost:8080?');
+      },
     });
   }
 
@@ -39,6 +41,6 @@ export class TablesBoardComponent implements OnInit {
       billRequested: 'Cuenta pedida',
     };
 
-    return labels[status];
+    return labels[status] ?? status;
   }
 }

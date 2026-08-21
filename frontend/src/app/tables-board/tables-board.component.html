@@ -2,24 +2,36 @@
   <h2>Tablero de Mesas</h2>
   <p class="description">Selecciona una mesa libre para tomar comandas o gestionar una orden activa.</p>
 
-  <p-table [value]="tables">
-    <ng-template #header>
-      <tr>
-        <th>Mesa</th>
-        <th>Estado</th>
-        <th></th>
-      </tr>
-    </ng-template>
-    <ng-template #body let-table>
-      <tr>
-        <td>{{ table.name }}</td>
-        <td>
-          <span class="status" [attr.data-status]="table.status">{{ statusLabel(table.status) }}</span>
-        </td>
-        <td>
-          <button type="button" class="action-btn" (click)="onSelectTable(table.id)">Tomar pedido</button>
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+  @if (loadError()) {
+    <p class="error">{{ loadError() }}</p>
+  }
+
+  @if (!loadError() && tables().length === 0) {
+    <p class="empty">No hay mesas cargadas.</p>
+  }
+
+  @if (tables().length > 0) {
+    <table class="mesas-table">
+      <thead>
+        <tr>
+          <th>Mesa</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (table of tables(); track table.id) {
+          <tr>
+            <td>{{ table.name }}</td>
+            <td>
+              <span class="status" [attr.data-status]="table.status">{{ statusLabel(table.status) }}</span>
+            </td>
+            <td>
+              <button type="button" class="action-btn" (click)="onSelectTable(table.id)">Tomar pedido</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
 </div>

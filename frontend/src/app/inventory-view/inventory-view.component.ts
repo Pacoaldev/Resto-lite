@@ -1,17 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TableModule } from 'primeng/table';
 import { OrdersService, Product } from '../core/orders.service';
 
 @Component({
   selector: 'app-inventory-view',
   standalone: true,
-  imports: [CommonModule, TableModule],
+  imports: [CommonModule],
   templateUrl: './inventory-view.component.html',
-  styleUrl: './inventory-view.component.scss'
+  styleUrl: './inventory-view.component.scss',
 })
 export class InventoryViewComponent implements OnInit {
-  products: Product[] = [];
+  readonly products = signal<Product[]>([]);
+  readonly loadError = signal<string | null>(null);
 
   constructor(private ordersService: OrdersService) {}
 
@@ -20,9 +20,14 @@ export class InventoryViewComponent implements OnInit {
   }
 
   loadInventory(): void {
+    this.loadError.set(null);
     this.ordersService.getProducts().subscribe({
-      next: (data) => (this.products = data),
-      error: (err) => console.error('Error al cargar inventario:', err)
+      next: (data) => this.products.set(data ?? []),
+      error: (err) => {
+        console.error('Error al cargar inventario:', err);
+        this.products.set([]);
+        this.loadError.set('No se pudo cargar el inventario. ¿Está el backend en http://localhost:8080?');
+      },
     });
   }
 }

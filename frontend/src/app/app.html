@@ -41,16 +41,19 @@
 
         <!-- Right Side Panel (Order taking / Info) -->
         <div class="col-4">
-          <div *ngIf="selectedTableId" class="side-panel-card animated-fade-in">
-            <app-order-taking 
-              [tableId]="selectedTableId"
-              (orderPlaced)="onOrderPlaced()">
-            </app-order-taking>
-          </div>
-          <div *ngIf="!selectedTableId" class="side-panel-card empty-panel">
-            <i class="pi pi-shopping-cart empty-icon"></i>
-            <p>Selecciona una mesa en el tablero para comenzar a tomar comandas.</p>
-          </div>
+          @if (selectedTableId(); as tableId) {
+            <div class="side-panel-card animated-fade-in">
+              <app-order-taking
+                [tableId]="tableId"
+                (orderPlaced)="onOrderPlaced()">
+              </app-order-taking>
+            </div>
+          } @else {
+            <div class="side-panel-card empty-panel">
+              <i class="pi pi-shopping-cart empty-icon"></i>
+              <p>Selecciona una mesa en el tablero para comenzar a tomar comandas.</p>
+            </div>
+          }
         </div>
       </div>
 

@@ -1,23 +1,36 @@
 <div class="inventoryView card">
   <h2>Control de Stock / Inventario</h2>
-  <p-table [value]="products" [stripedRows]="true">
-    <ng-template #header>
-      <tr>
-        <th>Producto</th>
-        <th>Precio</th>
-        <th>Stock Disponible</th>
-      </tr>
-    </ng-template>
-    <ng-template #body let-product>
-      <tr>
-        <td>{{ product.name }}</td>
-        <td>{{ product.price | currency:'EUR':'symbol':'1.2-2' }}</td>
-        <td>
-          <span [class.low-stock]="product.stock < 10" class="stock-badge">
-            {{ product.stock }} uds
-          </span>
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
+
+  @if (loadError()) {
+    <p class="error">{{ loadError() }}</p>
+  }
+
+  @if (!loadError() && products().length === 0) {
+    <p class="empty">No hay productos cargados.</p>
+  }
+
+  @if (products().length > 0) {
+    <table class="inventory-table">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Precio</th>
+          <th>Stock Disponible</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (product of products(); track product.id) {
+          <tr>
+            <td>{{ product.name }}</td>
+            <td>{{ product.price | currency:'EUR':'symbol':'1.2-2' }}</td>
+            <td>
+              <span [class.low-stock]="product.stock < 10" class="stock-badge">
+                {{ product.stock }} uds
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
 </div>
