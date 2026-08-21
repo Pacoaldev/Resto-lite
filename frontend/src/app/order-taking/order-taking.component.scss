@@ -1,0 +1,15 @@
+.orderTaking {
+  padding: 1rem;
+  max-width: 400px;
+}
+
+.itemRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.itemName {
+  flex: 1;
+}

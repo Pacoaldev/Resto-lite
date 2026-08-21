@@ -1,0 +1,11 @@
+<div class="orderTaking">
+  <h2>Nuevo pedido - mesa {{ tableId }}</h2>
+
+  <div class="itemRow" *ngFor="let item of availableItems">
+    <span class="itemName">{{ item.name }}</span>
+    <span class="itemPrice">{{ item.price | number: '1.2-2' }} €</span>
+    <p-inputNumber [(ngModel)]="quantities[item.name]" [min]="0" [showButtons]="true"></p-inputNumber>
+  </div>
+
+  <button pButton label="Enviar pedido" [loading]="saving" (click)="submitOrder()"></button>
+</div>

@@ -1,0 +1,24 @@
+<div class="tablesBoard">
+  <h2>Mesas</h2>
+
+  <p-table [value]="tables">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Mesa</th>
+        <th>Estado</th>
+        <th></th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-table>
+      <tr>
+        <td>{{ table.name }}</td>
+        <td>
+          <p-tag [value]="statusLabel(table.status)" [severity]="statusSeverity(table.status)"></p-tag>
+        </td>
+        <td>
+          <button pButton label="Tomar pedido" class="p-button-sm"></button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+</div>
