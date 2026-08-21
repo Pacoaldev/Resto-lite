@@ -1,113 +1,119 @@
-# Resto Lite — Ecosistema Digital de Sala y Comandas
+# Resto Lite — MVP de sala y comandas (1 local)
 
-Este repositorio contiene la implementación de **Resto Lite**, un MVP transversal y resiliente orientado a la digitalización de la operativa diaria en restaurantes independientes del mercado español y latinoamericano (México, Chile, Colombia, Argentina y Perú).
+Boceto ejecutable de un módulo **Lite** para un restaurante independiente: mesas, pedidos, cuenta con IVA LATAM/ES, sync asíncrono a un ERP Maestro simulado. Stack: **Laravel 10 (hexagonal) + Angular + Redis + MySQL**.
 
 ---
 
-## 🏗️ Arquitectura del Sistema (Backend DDD & Hexagonal)
+## Ciclo de mesa
 
-El backend de Resto Lite está construido en **Laravel 10** bajo el paradigma de **Arquitectura Hexagonal (Domain-Driven Design)**. Esta separación garantiza que el dominio del negocio esté aislado de los detalles de infraestructura (base de datos, llamadas HTTP externas, framework).
-
-### Estructura de Capas
-- **Domain (Núcleo):** Contiene las entidades, valor de objetos e interfaces de abstracción que rigen las reglas de negocio (ej. [`TaxCalculatorInterface.php`](file:///c:/Users/spano/Documents/PROYECTOS/Resto-lite/app/Orders/Domain/TaxCalculatorInterface.php)). No tiene dependencias de librerías externas.
-- **Application (Casos de Uso):** Orquesta los flujos de la aplicación y despacha eventos (ej. creación de órdenes).
-- **Infrastructure (Persistencia y Adaptadores):** Detalles de implementación técnica. Resuelve las consultas a base de datos (Eloquent), interactúa con colas (Redis), provee controladores HTTP y consume APIs de terceros (ERP Maestro).
+Estado de sala (no confundir con estado del pedido):
 
 ```
-   [ Cliente / API HTTP ] ────────> [ Adaptador API / Controllers ]
-                                                │
-                                                ▼ (puerto de entrada)
-                                      [ Casos de Uso / App ]
-                                                │
-                                                ▼
-                                    [ Dominio de Negocio ]
-                                                │
-                          ┌─────────────────────┴─────────────────────┐
-                          ▼ (puerto de salida)                        ▼ (puerto de salida)
-             [ Repositorio persistencia ]               [ Cliente ERP Maestro / Worker ]
-                          │                                           │
-                          ▼                                           ▼
-                    [ Eloquent / DB ]                           [ Redis / Queue ]
+libre → ocupada (al crear pedido) → cuenta pedida (pedir cuenta) → libre (cobrar)
 ```
 
----
-
-## ⚡ Resiliencia y Flujo Asíncrono (Eventos y Colas)
-
-El flujo de pedidos utiliza un sistema asíncrono para garantizar que el restaurante nunca se detenga:
-
-1. **Creación de Orden:** El controlador registra la comanda en base de datos de manera transaccional e inmediatamente dispara el evento `OrderCreatedEvent`.
-2. **Listener Asíncrono:** `SyncOrderToErpMaestroListener` captura el evento y lo encola en **Redis** (`QUEUE_CONNECTION=redis`).
-3. **Resiliencia de Workers:** El worker procesa la llamada al ERP Maestro simulado. Si el servidor externo está offline, un bloque `try-catch` robusto captura la excepción, escribe un log de advertencia y gestiona reintentos con retraso progresivo (`$tries = 5`, `$backoff = 10`), evitando bloqueos en el hilo de ejecución principal.
+| Acción UI | Efecto |
+|-----------|--------|
+| Tomar / añadir pedido | Crea orden; mesa → `occupied` |
+| Pedir cuenta | Genera cuenta con desglose fiscal; mesa → `billRequested` |
+| Ver cuenta | Misma cuenta (subtotal + IVA/IGV + total) |
+| Cobrar | Marca pedidos `paid`; mesa → `free` |
 
 ---
 
-## 🛡️ Estrategia de Impuestos (España y LATAM)
+## Impuestos y establecimiento
 
-Utilizamos el patrón de diseño **Estrategia (Strategy Pattern)** para resolver dinámicamente el cálculo de impuestos de cada comanda según la localización del local, controlado por la variable de entorno `TAX_COUNTRY`:
+Un local Lite = **un país fiscal + una moneda de presentación** (sin conversión FX).
 
-| País | Estrategia | Tasa Aplicada |
-|:---|:---|:---:|
-| **España** (Defecto) | `SpainTaxCalculator` | 21% IVA |
-| **México** | `MexicoTaxCalculator` | 16% IVA |
-| **Chile** | `ChileTaxCalculator` | 19% IVA |
-| **Colombia** | `ColombiaTaxCalculator` | 19% IVA |
-| **Argentina** | `ArgentinaTaxCalculator` | 21% IVA |
-| **Perú** | `PeruTaxCalculator` | 18% IGV |
+| País | Calculadora | Impuesto |
+|------|-------------|----------|
+| España (default) | `SpainTaxCalculator` | IVA 21% · EUR |
+| México | `MexicoTaxCalculator` | IVA 16% · MXN |
+| Chile | `ChileTaxCalculator` | IVA 19% · CLP |
+| Colombia | `ColombiaTaxCalculator` | IVA 19% · COP |
+| Argentina | `ArgentinaTaxCalculator` | IVA 21% · ARS |
+| Perú | `PeruTaxCalculator` | IGV 18% · PEN |
 
-La resolución de la estrategia se inyecta dinámicamente a través del Service Container en [`AppServiceProvider.php`](file:///c:/Users/spano/Documents/PROYECTOS/Resto-lite/app/Providers/AppServiceProvider.php).
+- Default: `TAX_COUNTRY` en entorno.
+- En runtime (demo): selector del sidebar → `PUT /api/establishment` con `{ "country": "mx" }`.
+- La cuenta (`POST .../request-bill`) devuelve `subtotal`, `taxLabel`, `taxRate`, `taxAmount`, `total`, `currency`, `country`.
 
----
-
-## 📱 Frontend Offline-First (Angular + Ionic)
-
-El ecosistema cuenta con dos interfaces frontend construidas sobre **Angular 17+**:
-
-### 1. Panel de Control de Sala (Web / PrimeNG)
-- Tablero interactivo de mesas con actualización y toma de comandas dinámica.
-- **Resiliencia Offline:** El servicio intercepta pérdidas de conexión a red. Si el backend no responde, almacena temporalmente los pedidos en `LocalStorage` con estado `offline_pending`.
-- **Auto-Sync:** Un temporizador periódico en segundo plano monitorea la recuperación del canal y sincroniza secuencialmente las comandas pendientes sin intervención humana.
-
-### 2. Monitor de Sala Móvil (Ionic / Capacitor)
-- Inicializado en la carpeta `/mobile`.
-- Diseñado específicamente para smartphones de sala. Lista el estado en tiempo real de las mesas del restaurante con una interfaz táctil limpia y ágil.
+Patrón: **Strategy** vía `TaxCalculatorInterface` + `TaxCountryConfig`.
 
 ---
 
-## 🛠️ Guía Rápida de Comandos y Calidad (QA)
+## API (corta)
 
-### Iniciar el entorno de desarrollo (Docker)
+Base: `/api`
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| `GET` | `/tables` | Listado de mesas y estado |
+| `POST` | `/tables/{id}/request-bill` | Pedir / ver cuenta (con IVA) |
+| `POST` | `/tables/{id}/settle` | Cobrar y liberar mesa |
+| `GET` | `/products` | Catálogo / stock |
+| `POST` | `/orders` | Crear pedido (`tableId`, `items[]`) |
+| `PATCH` | `/orders/{id}/status` | Cambiar estado de pedido |
+| `GET` | `/establishment` | País, moneda, tasa e impuesto actuales |
+| `PUT` | `/establishment` | Cambiar país fiscal del local (`country`) |
+
+---
+
+## Arquitectura (backend)
+
+Laravel hexagonal: Domain (reglas + puertos) → Application (casos de uso) → Infrastructure (HTTP, Eloquent, Redis, ERP).
+
+```
+[ API Controllers ] → [ Use cases ] → [ Domain ]
+                           │
+              ┌────────────┴────────────┐
+              ▼                         ▼
+        [ Eloquent / DB ]      [ Redis queue → ERP Maestro ]
+```
+
+### Sync asíncrono
+
+1. Crear pedido → `OrderCreatedEvent`
+2. Listener encola sync en Redis
+3. Worker reintenta si el ERP simulado falla (`$tries` / `$backoff`)
+
+### Frontend
+
+- **Web (Angular):** tablero de mesas, comanda, inventario, offline → `localStorage` + re-sync.
+- **Mobile (Ionic):** monitor de estado de mesas.
+
+---
+
+## Problema encontrado: PHP host 8.4 vs Docker 8.3
+
+**Síntoma:** `artisan` dentro del contenedor fallaba con  
+`Composer dependencies require a PHP version ">= 8.4.1". You are running 8.3.33`.
+
+**Causa:** Composer en el host (PHP 8.4) resolvió `symfony/css-selector` v8.x (≥ 8.4.1). La imagen Docker es `php:8.3-fpm`.
+
+**Solución:**
+
+1. Pin de plataforma en `composer.json`: `"platform": { "php": "8.3.33" }`
+2. Downgrade a `symfony/css-selector` 7.x compatible con 8.3
+
+Así el lockfile apunta al runtime de Docker aunque el host sea más nuevo.
+
+---
+
+## Comandos útiles
+
 ```bash
-# Levantar contenedores (Laravel, MySQL, Redis)
 docker-compose up -d
-
-# Instalar dependencias backend
 docker-compose exec app composer install
-```
+docker-compose exec app php artisan migrate:fresh --seed
 
-### Ejecutar Suite de Calidad y Pruebas del Backend
-```bash
-# Pruebas Unitarias de Impuestos (Pest)
 docker-compose exec app ./vendor/bin/pest
-
-# Análisis Estático de Código (PHPStan Nivel 5)
 docker-compose exec app ./vendor/bin/phpstan analyse
+
+cd frontend && npm install && npm run start
+# E2E: npm run cypress:run
+
+cd mobile && npm install && npm run build
 ```
 
-### Ejecutar Suite del Frontend Web
-```bash
-# Instalar e iniciar servidor de desarrollo Angular
-cd frontend
-npm install
-npm run start
-
-# Ejecutar tests Cypress E2E en consola
-npm run cypress:run
-```
-
-### Ejecutar Suite de la App Móvil
-```bash
-cd mobile
-npm install
-npm run build
-```
+Web habitual: frontend `http://localhost:4200` · API vía nginx `http://localhost:8080`.
