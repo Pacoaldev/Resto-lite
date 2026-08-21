@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./frontend/public/Logo_RepoLite.svg" alt="RestoLite" width="600" />
+</p>
+
 # Resto Lite — MVP de sala y comandas (1 local)
 
 Boceto ejecutable de un módulo **Lite** para un restaurante independiente: mesas, pedidos, cuenta con IVA LATAM/ES, sync asíncrono a un ERP Maestro simulado. Stack: **Laravel 10 (hexagonal) + Angular + Redis + MySQL**.
