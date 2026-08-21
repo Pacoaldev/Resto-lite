@@ -1,14 +1,12 @@
 import { Component, OnInit, EventEmitter, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
-import { TagModule } from 'primeng/tag';
-import { Button } from 'primeng/button';
 import { OrdersService, RestaurantTable } from '../core/orders.service';
 
 @Component({
   selector: 'app-tables-board',
   standalone: true,
-  imports: [CommonModule, TableModule, TagModule, Button],
+  imports: [CommonModule, TableModule],
   templateUrl: './tables-board.component.html',
   styleUrl: './tables-board.component.scss',
 })
@@ -42,15 +40,5 @@ export class TablesBoardComponent implements OnInit {
     };
 
     return labels[status];
-  }
-
-  statusSeverity(status: RestaurantTable['status']): any {
-    const severities: Record<RestaurantTable['status'], string> = {
-      free: 'success',
-      occupied: 'warning',
-      billRequested: 'danger',
-    };
-
-    return severities[status];
   }
 }

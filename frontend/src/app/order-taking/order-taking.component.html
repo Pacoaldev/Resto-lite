@@ -5,9 +5,11 @@
     <div class="itemRow">
       <span class="itemName">{{ item.name }}</span>
       <span class="itemPrice">{{ item.price | currency:'EUR':'symbol':'1.2-2' }}</span>
-      <input type="number" [(ngModel)]="quantities[item.name]" min="0" class="p-inputtext p-component" style="width: 80px;" />
+      <input type="number" [(ngModel)]="quantities[item.name]" min="0" class="qty-input" />
     </div>
   }
 
-  <p-button label="Enviar pedido" [loading]="saving" (onClick)="submitOrder()" />
+  <button type="button" class="submit-btn" [disabled]="saving" (click)="submitOrder()">
+    {{ saving ? 'Enviando…' : 'Enviar pedido' }}
+  </button>
 </div>

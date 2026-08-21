@@ -14,10 +14,10 @@
       <tr>
         <td>{{ table.name }}</td>
         <td>
-          <p-tag [value]="statusLabel(table.status)" [severity]="statusSeverity(table.status)"></p-tag>
+          <span class="status" [attr.data-status]="table.status">{{ statusLabel(table.status) }}</span>
         </td>
         <td>
-          <p-button label="Tomar pedido" size="small" (onClick)="onSelectTable(table.id)" />
+          <button type="button" class="action-btn" (click)="onSelectTable(table.id)">Tomar pedido</button>
         </td>
       </tr>
     </ng-template>
