@@ -1,66 +1,113 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Resto Lite — Ecosistema Digital de Sala y Comandas
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este repositorio contiene la implementación de **Resto Lite**, un MVP transversal y resiliente orientado a la digitalización de la operativa diaria en restaurantes independientes del mercado español y latinoamericano (México, Chile, Colombia, Argentina y Perú).
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🏗️ Arquitectura del Sistema (Backend DDD & Hexagonal)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+El backend de Resto Lite está construido en **Laravel 10** bajo el paradigma de **Arquitectura Hexagonal (Domain-Driven Design)**. Esta separación garantiza que el dominio del negocio esté aislado de los detalles de infraestructura (base de datos, llamadas HTTP externas, framework).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Estructura de Capas
+- **Domain (Núcleo):** Contiene las entidades, valor de objetos e interfaces de abstracción que rigen las reglas de negocio (ej. [`TaxCalculatorInterface.php`](file:///c:/Users/spano/Documents/PROYECTOS/Resto-lite/app/Orders/Domain/TaxCalculatorInterface.php)). No tiene dependencias de librerías externas.
+- **Application (Casos de Uso):** Orquesta los flujos de la aplicación y despacha eventos (ej. creación de órdenes).
+- **Infrastructure (Persistencia y Adaptadores):** Detalles de implementación técnica. Resuelve las consultas a base de datos (Eloquent), interactúa con colas (Redis), provee controladores HTTP y consume APIs de terceros (ERP Maestro).
 
-## Learning Laravel
+```
+   [ Cliente / API HTTP ] ────────> [ Adaptador API / Controllers ]
+                                                │
+                                                ▼ (puerto de entrada)
+                                      [ Casos de Uso / App ]
+                                                │
+                                                ▼
+                                    [ Dominio de Negocio ]
+                                                │
+                          ┌─────────────────────┴─────────────────────┐
+                          ▼ (puerto de salida)                        ▼ (puerto de salida)
+             [ Repositorio persistencia ]               [ Cliente ERP Maestro / Worker ]
+                          │                                           │
+                          ▼                                           ▼
+                    [ Eloquent / DB ]                           [ Redis / Queue ]
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## ⚡ Resiliencia y Flujo Asíncrono (Eventos y Colas)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+El flujo de pedidos utiliza un sistema asíncrono para garantizar que el restaurante nunca se detenga:
 
-## Laravel Sponsors
+1. **Creación de Orden:** El controlador registra la comanda en base de datos de manera transaccional e inmediatamente dispara el evento `OrderCreatedEvent`.
+2. **Listener Asíncrono:** `SyncOrderToErpMaestroListener` captura el evento y lo encola en **Redis** (`QUEUE_CONNECTION=redis`).
+3. **Resiliencia de Workers:** El worker procesa la llamada al ERP Maestro simulado. Si el servidor externo está offline, un bloque `try-catch` robusto captura la excepción, escribe un log de advertencia y gestiona reintentos con retraso progresivo (`$tries = 5`, `$backoff = 10`), evitando bloqueos en el hilo de ejecución principal.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+---
 
-### Premium Partners
+## 🛡️ Estrategia de Impuestos (España y LATAM)
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+Utilizamos el patrón de diseño **Estrategia (Strategy Pattern)** para resolver dinámicamente el cálculo de impuestos de cada comanda según la localización del local, controlado por la variable de entorno `TAX_COUNTRY`:
 
-## Contributing
+| País | Estrategia | Tasa Aplicada |
+|:---|:---|:---:|
+| **España** (Defecto) | `SpainTaxCalculator` | 21% IVA |
+| **México** | `MexicoTaxCalculator` | 16% IVA |
+| **Chile** | `ChileTaxCalculator` | 19% IVA |
+| **Colombia** | `ColombiaTaxCalculator` | 19% IVA |
+| **Argentina** | `ArgentinaTaxCalculator` | 21% IVA |
+| **Perú** | `PeruTaxCalculator` | 18% IGV |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+La resolución de la estrategia se inyecta dinámicamente a través del Service Container en [`AppServiceProvider.php`](file:///c:/Users/spano/Documents/PROYECTOS/Resto-lite/app/Providers/AppServiceProvider.php).
 
-## Code of Conduct
+---
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## 📱 Frontend Offline-First (Angular + Ionic)
 
-## Security Vulnerabilities
+El ecosistema cuenta con dos interfaces frontend construidas sobre **Angular 17+**:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 1. Panel de Control de Sala (Web / PrimeNG)
+- Tablero interactivo de mesas con actualización y toma de comandas dinámica.
+- **Resiliencia Offline:** El servicio intercepta pérdidas de conexión a red. Si el backend no responde, almacena temporalmente los pedidos en `LocalStorage` con estado `offline_pending`.
+- **Auto-Sync:** Un temporizador periódico en segundo plano monitorea la recuperación del canal y sincroniza secuencialmente las comandas pendientes sin intervención humana.
 
-## License
+### 2. Monitor de Sala Móvil (Ionic / Capacitor)
+- Inicializado en la carpeta `/mobile`.
+- Diseñado específicamente para smartphones de sala. Lista el estado en tiempo real de las mesas del restaurante con una interfaz táctil limpia y ágil.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+## 🛠️ Guía Rápida de Comandos y Calidad (QA)
+
+### Iniciar el entorno de desarrollo (Docker)
+```bash
+# Levantar contenedores (Laravel, MySQL, Redis)
+docker-compose up -d
+
+# Instalar dependencias backend
+docker-compose exec app composer install
+```
+
+### Ejecutar Suite de Calidad y Pruebas del Backend
+```bash
+# Pruebas Unitarias de Impuestos (Pest)
+docker-compose exec app ./vendor/bin/pest
+
+# Análisis Estático de Código (PHPStan Nivel 5)
+docker-compose exec app ./vendor/bin/phpstan analyse
+```
+
+### Ejecutar Suite del Frontend Web
+```bash
+# Instalar e iniciar servidor de desarrollo Angular
+cd frontend
+npm install
+npm run start
+
+# Ejecutar tests Cypress E2E en consola
+npm run cypress:run
+```
+
+### Ejecutar Suite de la App Móvil
+```bash
+cd mobile
+npm install
+npm run build
+```
