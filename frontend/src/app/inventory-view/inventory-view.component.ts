@@ -34,4 +34,14 @@ export class InventoryViewComponent {
       },
     });
   }
+
+  stockClass(stock: number): string {
+    if (stock < 10) {
+      return 'low-stock';
+    }
+    if (stock < 40) {
+      return 'mid-stock';
+    }
+    return '';
+  }
 }

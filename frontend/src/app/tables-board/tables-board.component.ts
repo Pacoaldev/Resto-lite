@@ -17,6 +17,7 @@ export class TablesBoardComponent {
   readonly bill = signal<TableBill | null>(null);
   readonly busyTableId = signal<number | null>(null);
   readonly selectTable = output<number>();
+  readonly boardChanged = output<number>();
 
   constructor(private ordersService: OrdersService) {
     effect(() => {
@@ -28,10 +29,16 @@ export class TablesBoardComponent {
   loadTables(): void {
     this.loadError.set(null);
     this.ordersService.getTables().subscribe({
-      next: (data) => this.tables.set(data ?? []),
+      next: (data) => {
+        const tables = data ?? [];
+        this.tables.set(tables);
+        const busy = tables.filter((t) => t.status !== 'free').length;
+        queueMicrotask(() => this.boardChanged.emit(busy));
+      },
       error: (err) => {
         console.error('Error al cargar mesas:', err);
         this.tables.set([]);
+        queueMicrotask(() => this.boardChanged.emit(0));
         this.loadError.set('No se pudieron cargar las mesas. ¿Está el backend en http://localhost:8080?');
       },
     });

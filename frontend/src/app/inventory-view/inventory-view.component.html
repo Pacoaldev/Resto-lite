@@ -1,4 +1,4 @@
-<div class="inventoryView card">
+<div class="inventoryView">
   <h2>Control de Stock / Inventario</h2>
 
   @if (loadError()) {
@@ -24,7 +24,7 @@
             <td>{{ product.name }}</td>
             <td>{{ product.price | currency: ordersService.currencyCode():'symbol':'1.2-2' }}</td>
             <td>
-              <span [class.low-stock]="product.stock < 10" class="stock-badge">
+              <span class="stock-badge" [ngClass]="stockClass(product.stock)">
                 {{ product.stock }} uds
               </span>
             </td>

@@ -1,23 +1,26 @@
 .tablesBoard {
   h2 {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #1e293b;
-    margin-bottom: 0.25rem;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 0.3rem;
+    letter-spacing: -0.01em;
   }
 
   .description {
     color: #64748b;
-    font-size: 0.875rem;
-    margin-bottom: 1.5rem;
+    font-size: 0.84rem;
+    margin: 0 0 1.15rem;
+    line-height: 1.45;
   }
 
   .error {
     color: #b91c1c;
     background: #fef2f2;
     border: 1px solid #fecaca;
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 0.75rem 1rem;
+    margin-bottom: 0.85rem;
   }
 
   .empty {
@@ -26,32 +29,45 @@
 
   .mesas-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     background: #fff;
-    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
     overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
   }
 
   .mesas-table th,
   .mesas-table td {
     text-align: left;
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid #e2e8f0;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid #eef2f7;
+    vertical-align: middle;
+  }
+
+  .mesas-table tr:last-child td {
+    border-bottom: 0;
   }
 
   .mesas-table th {
-    background: #f1f5f9;
+    background: #f8fafc;
     color: #475569;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .mesas-table tbody tr:hover td {
+    background: #f8fafc;
   }
 
   .status {
     display: inline-block;
-    padding: 0.2rem 0.55rem;
+    padding: 0.22rem 0.6rem;
     border-radius: 999px;
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.78rem;
+    font-weight: 700;
   }
 
   .status[data-status='free'] {
@@ -60,23 +76,24 @@
   }
 
   .status[data-status='occupied'] {
-    background: #fef3c7;
-    color: #92400e;
+    background: #ffedd5;
+    color: #c2410c;
   }
 
   .status[data-status='billRequested'] {
-    background: #fee2e2;
-    color: #991b1b;
+    background: #ffe4e6;
+    color: #be123c;
   }
 
   .action-btn {
     border: 0;
-    border-radius: 6px;
+    border-radius: 8px;
     background: #1e3a5f;
     color: #fff;
-    padding: 0.4rem 0.75rem;
-    font-size: 0.85rem;
-    font-weight: 600;
+    padding: 0.42rem 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-family: inherit;
     cursor: pointer;
   }
 
@@ -85,7 +102,7 @@
   }
 
   .action-btn:disabled {
-    opacity: 0.6;
+    opacity: 0.55;
     cursor: not-allowed;
   }
 
@@ -94,45 +111,49 @@
   }
 
   .action-btn.settle {
-    background: #166534;
+    background: #15803d;
   }
 
   .actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem;
+    justify-content: flex-end;
   }
 
   .bill-panel {
-    margin-top: 1.25rem;
-    padding: 1rem;
+    margin-top: 1.1rem;
+    padding: 1rem 1.1rem;
     border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    background: #f8fafc;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #f8fafc 0%, #fff 100%);
   }
 
   .bill-panel h3 {
     margin: 0 0 0.75rem;
     font-size: 1rem;
+    font-weight: 800;
   }
 
   .bill-panel ul {
     margin: 0 0 0.75rem;
     padding-left: 1.1rem;
+    color: #334155;
   }
 
   .bill-totals {
-    margin: 0 0 0.75rem;
-    font-size: 0.9rem;
+    margin: 0 0 0.85rem;
+    font-size: 0.88rem;
     color: #334155;
 
     p {
-      margin: 0.2rem 0;
+      margin: 0.25rem 0;
     }
   }
 
   .bill-total {
-    margin: 0.5rem 0 0.75rem;
+    margin: 0.45rem 0 0;
     color: #0f172a;
+    font-size: 1rem;
   }
 }

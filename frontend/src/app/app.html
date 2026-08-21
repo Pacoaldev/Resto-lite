@@ -1,85 +1,132 @@
 <div class="resto-app">
-  <!-- Top Navigation Header -->
   <header class="resto-header">
-    <div class="logo">
-      <span class="brand">RESTO</span>
-      <span class="lite-badge">Lite</span>
+    <div class="header-left">
+      <button type="button" class="icon-btn" aria-label="Menú">
+        <i class="pi pi-bars"></i>
+      </button>
+      <div class="logo">
+        <span class="logo-mark" aria-hidden="true"><i class="pi pi-shop"></i></span>
+        <span class="brand">RESTO</span>
+        <span class="lite-badge">Lite</span>
+      </div>
     </div>
-    <div class="system-status">
-      <i class="pi pi-check-circle text-green-500"></i>
-      <span>Sincronizado con ERP Maestro</span>
+
+    <div class="header-right">
+      <div class="system-status">
+        <i class="pi pi-check-circle"></i>
+        <span>Sincronizado con ERP Maestro</span>
+      </div>
+      <button type="button" class="icon-btn" aria-label="Pantalla completa" disabled title="Demo">
+        <i class="pi pi-window-maximize"></i>
+      </button>
+      <button type="button" class="icon-btn" aria-label="Notificaciones" disabled title="Demo">
+        <i class="pi pi-bell"></i>
+      </button>
+      <button type="button" class="avatar-btn" aria-label="Usuario" disabled title="Demo">
+        <i class="pi pi-user"></i>
+      </button>
     </div>
   </header>
 
-  <!-- Main Container -->
   <div class="main-layout">
-    <!-- Sidebar Navigation / Actions -->
     <aside class="sidebar">
-      <div class="nav-section">
-        <h3>OPERATIVA</h3>
-        <button class="nav-btn active">
-          <i class="pi pi-th-large"></i>
-          <span>Mesas y Pedidos</span>
-        </button>
-      </div>
-      <div class="nav-section mt-4">
-        <h3>ESTABLECIMIENTO</h3>
-        <div class="location-card">
-          @if (ordersService.establishment(); as est) {
-            <h4>{{ est.name }}</h4>
-            <p>{{ est.taxLabel }} {{ (est.taxRate * 100) | number:'1.0-0' }}% · {{ est.currency }}</p>
-            <label class="country-label" for="country-select">País fiscal</label>
-            <select
-              id="country-select"
-              class="country-select"
-              [value]="est.country"
-              [disabled]="switchingCountry()"
-              (change)="onCountryChange($event)">
-              @for (opt of est.options; track opt.country) {
-                <option [value]="opt.country">{{ opt.name }} ({{ opt.currency }})</option>
-              }
-            </select>
-          } @else {
-            <h4>Cargando local…</h4>
-            <p>Régimen fiscal del establecimiento</p>
-          }
+      <div class="sidebar-top">
+        <div class="nav-section">
+          <h3>OPERATIVA</h3>
+          <button
+            type="button"
+            class="nav-btn"
+            [class.active]="section() === 'sala'"
+            (click)="setSection('sala')">
+            <i class="pi pi-th-large"></i>
+            <span>Mesas y Pedidos</span>
+            @if (salaBusyCount() > 0) {
+              <span class="nav-badge">{{ salaBusyCount() }}</span>
+            }
+          </button>
         </div>
+
+        <div class="nav-section">
+          <h3>ESTABLECIMIENTO</h3>
+          <div class="location-card">
+            @if (ordersService.establishment(); as est) {
+              <h4>{{ est.name }}</h4>
+              <p>{{ taxSummary() }}</p>
+              <label class="country-label" for="country-select">País fiscal</label>
+              <select
+                id="country-select"
+                class="country-select"
+                [value]="est.country"
+                [disabled]="switchingCountry()"
+                (change)="onCountryChange($event)">
+                @for (opt of est.options; track opt.country) {
+                  <option [value]="opt.country">{{ opt.name }} ({{ opt.currency }})</option>
+                }
+              </select>
+            } @else {
+              <h4>Cargando local…</h4>
+              <p>Régimen fiscal del establecimiento</p>
+            }
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-bottom">
+        <button
+          type="button"
+          class="nav-btn"
+          [class.active]="section() === 'inventario'"
+          (click)="setSection('inventario')">
+          <i class="pi pi-box"></i>
+          <span>Menú / Inventario</span>
+        </button>
+        <button type="button" class="nav-btn muted" disabled title="Fuera del alcance Lite demo">
+          <i class="pi pi-chart-bar"></i>
+          <span>Informes</span>
+        </button>
       </div>
     </aside>
 
-    <!-- Workspace Grid -->
     <main class="workspace">
-      <div class="grid">
-        <!-- Tables Board (Left column) -->
-        <div class="col-8">
-          <app-tables-board
-            [refreshKey]="tablesTick()"
-            (selectTable)="onSelectTable($event)">
-          </app-tables-board>
-        </div>
+      @if (section() === 'sala') {
+        <div class="workspace-grid">
+          <section class="panel panel-main">
+            <app-tables-board
+              [refreshKey]="tablesTick()"
+              (selectTable)="onSelectTable($event)"
+              (boardChanged)="onBoardChanged($event)">
+            </app-tables-board>
+          </section>
 
-        <!-- Right Side Panel (Order taking / Info) -->
-        <div class="col-4">
-          @if (selectedTableId(); as tableId) {
-            <div class="side-panel-card animated-fade-in">
-              <app-order-taking
-                [tableId]="tableId"
-                (orderPlaced)="onOrderPlaced()">
-              </app-order-taking>
-            </div>
-          } @else {
-            <div class="side-panel-card empty-panel">
-              <i class="pi pi-shopping-cart empty-icon"></i>
-              <p>Selecciona una mesa en el tablero para comenzar a tomar comandas.</p>
-            </div>
-          }
-        </div>
-      </div>
+          <aside class="rail">
+            <section class="panel panel-rail">
+              @if (selectedTableId(); as tableId) {
+                <app-order-taking
+                  [tableId]="tableId"
+                  (orderPlaced)="onOrderPlaced()">
+                </app-order-taking>
+              } @else {
+                <div class="empty-panel">
+                  <div class="empty-icon-wrap">
+                    <i class="pi pi-shopping-cart empty-icon"></i>
+                  </div>
+                  <p>Selecciona una mesa en el tablero para comenzar a tomar comandas.</p>
+                </div>
+              }
+            </section>
 
-      <!-- Bottom Inventory Section -->
-      <div class="inventory-section mt-4">
-        <app-inventory-view [refreshKey]="inventoryTick()"></app-inventory-view>
-      </div>
+            <section class="panel panel-rail compact">
+              <h3 class="rail-title">Pedidos recientes</h3>
+              <p class="rail-hint">Resumen operativo del turno — demo Lite.</p>
+              <div class="rail-placeholder">Summary</div>
+            </section>
+          </aside>
+        </div>
+      } @else {
+        <section class="panel panel-full">
+          <app-inventory-view [refreshKey]="inventoryTick()"></app-inventory-view>
+        </section>
+      }
     </main>
   </div>
 </div>
