@@ -1,0 +1,43 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Access to an undefined property App\\Orders\\Infrastructure\\Persistence\\OrderModel\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Orders/Infrastructure/Persistence/EloquentOrderRepository.php
+
+		-
+			message: '#^Access to an undefined property App\\Orders\\Infrastructure\\Persistence\\OrderModel\:\:\$items\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Orders/Infrastructure/Persistence/EloquentOrderRepository.php
+
+		-
+			message: '#^Access to an undefined property App\\Orders\\Infrastructure\\Persistence\\OrderModel\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Orders/Infrastructure/Persistence/EloquentOrderRepository.php
+
+		-
+			message: '#^Access to an undefined property App\\Orders\\Infrastructure\\Persistence\\OrderModel\:\:\$tableId\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Orders/Infrastructure/Persistence/EloquentOrderRepository.php
+
+		-
+			message: '#^Call to an undefined static method App\\Orders\\Infrastructure\\Persistence\\OrderModel\:\:find\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Orders/Infrastructure/Persistence/EloquentOrderRepository.php
+
+		-
+			message: '#^Call to an undefined static method App\\Orders\\Infrastructure\\Persistence\\OrderModel\:\:findOrFail\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Orders/Infrastructure/Persistence/EloquentOrderRepository.php
+
+		-
+			message: '#^Call to an undefined static method App\\Orders\\Infrastructure\\Persistence\\OrderModel\:\:where\(\)\.$#'
+			identifier: staticMethod.notFound
+			count: 1
+			path: app/Orders/Infrastructure/Persistence/EloquentOrderRepository.php

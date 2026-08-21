@@ -15,7 +15,8 @@ class SyncOrderToErpMaestroListener implements ShouldQueue
     public function handle(OrderCreatedEvent $event): void
     {
         // en el boceto no hay ERP maestro real, se simula la llamada
-        $endpoint = config('services.erpMaestro.url');
+        /** @var string $endpoint */
+        $endpoint = config('services.erpMaestro.url') ?? '';
 
         Log::info('Sincronizando pedido con ERP maestro', [
             'orderId' => $event->orderId,
