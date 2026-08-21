@@ -22,10 +22,7 @@ class SettleTableUseCase
                 fn ($order) => in_array($order->getStatus(), [OrderStatus::Open, OrderStatus::Sent], true)
             ));
 
-            if ($active === []) {
-                throw new \DomainException('No hay pedidos pendientes de cobro en esta mesa');
-            }
-
+            // ponytail: free even with no open orders — unbricks inconsistent billRequested/occupied states
             foreach ($active as $order) {
                 $order->changeStatus(OrderStatus::Paid);
                 $this->orderRepository->save($order);

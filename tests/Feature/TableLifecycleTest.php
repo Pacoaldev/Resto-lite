@@ -59,3 +59,11 @@ it('genera la cuenta y marca billRequested; al cobrar vuelve a libre', function 
     expect(DB::table('tables')->where('id', 1)->value('status'))->toBe('free')
         ->and(DB::table('orders')->where('tableId', 1)->value('status'))->toBe('paid');
 });
+
+it('libera una mesa billRequested aunque no tenga pedidos abiertos', function () {
+    DB::table('tables')->where('id', 1)->update(['status' => 'billRequested']);
+
+    app(SettleTableUseCase::class)->execute(1);
+
+    expect(DB::table('tables')->where('id', 1)->value('status'))->toBe('free');
+});
