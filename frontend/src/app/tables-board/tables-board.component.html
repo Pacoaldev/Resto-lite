@@ -15,57 +15,64 @@
   }
 
   @if (tables().length > 0) {
-    <table class="mesas-table">
-      <thead>
-        <tr>
-          <th>Mesa</th>
-          <th>Estado</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (table of tables(); track table.id) {
-          <tr>
-            <td>{{ table.name }}</td>
-            <td>
-              <span class="status" [attr.data-status]="table.status">{{ statusLabel(table.status) }}</span>
-            </td>
-            <td class="actions">
-              @if (table.status === 'free' || table.status === 'occupied') {
-                <button type="button" class="action-btn" (click)="onSelectTable(table.id)">
-                  {{ table.status === 'free' ? 'Tomar pedido' : 'Añadir pedido' }}
-                </button>
-              }
-              @if (table.status === 'occupied') {
-                <button
-                  type="button"
-                  class="action-btn secondary"
-                  [disabled]="busyTableId() === table.id"
-                  (click)="requestBill(table.id)">
-                  Pedir cuenta
-                </button>
-              }
-              @if (table.status === 'billRequested') {
-                <button
-                  type="button"
-                  class="action-btn secondary"
-                  [disabled]="busyTableId() === table.id"
-                  (click)="requestBill(table.id)">
-                  Ver cuenta
-                </button>
-                <button
-                  type="button"
-                  class="action-btn settle"
-                  [disabled]="busyTableId() === table.id"
-                  (click)="settle(table.id)">
-                  Cobrar
-                </button>
-              }
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+    <div class="mesas-grid">
+      @for (table of tables(); track table.id) {
+        <div class="mesa-card" [attr.data-status]="table.status" (click)="onSelectTable(table.id)">
+          <div class="mesa-card-header">
+            <span class="mesa-number">Mesa {{ table.name.replace('Mesa ', '') }}</span>
+            <span class="status-indicator" [attr.data-status]="table.status"></span>
+          </div>
+          
+          <div class="mesa-card-body">
+            <div class="status-badge" [attr.data-status]="table.status">
+              <i class="pi" [ngClass]="{
+                'pi-check-circle': table.status === 'free',
+                'pi-shopping-cart': table.status === 'occupied',
+                'pi-wallet': table.status === 'billRequested'
+              }"></i>
+              <span>{{ statusLabel(table.status) }}</span>
+            </div>
+          </div>
+          
+          <div class="mesa-card-actions" (click)="$event.stopPropagation()">
+            @if (table.status === 'free' || table.status === 'occupied') {
+              <button type="button" class="btn-action primary" (click)="onSelectTable(table.id)">
+                <i class="pi pi-plus"></i>
+                <span>{{ table.status === 'free' ? 'Comanda' : 'Añadir' }}</span>
+              </button>
+            }
+            @if (table.status === 'occupied') {
+              <button
+                type="button"
+                class="btn-action secondary"
+                [disabled]="busyTableId() === table.id"
+                (click)="requestBill(table.id)">
+                <i class="pi pi-file-o"></i>
+                <span>Cuenta</span>
+              </button>
+            }
+            @if (table.status === 'billRequested') {
+              <button
+                type="button"
+                class="btn-action secondary"
+                [disabled]="busyTableId() === table.id"
+                (click)="requestBill(table.id)">
+                <i class="pi pi-eye"></i>
+                <span>Ver</span>
+              </button>
+              <button
+                type="button"
+                class="btn-action settle"
+                [disabled]="busyTableId() === table.id"
+                (click)="settle(table.id)">
+                <i class="pi pi-credit-card"></i>
+                <span>Cobrar</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
   }
 
   @if (bill(); as currentBill) {
