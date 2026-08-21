@@ -22,7 +22,7 @@
         @for (product of products(); track product.id) {
           <tr>
             <td>{{ product.name }}</td>
-            <td>{{ product.price | currency:'EUR':'symbol':'1.2-2' }}</td>
+            <td>{{ product.price | currency: ordersService.currencyCode():'symbol':'1.2-2' }}</td>
             <td>
               <span [class.low-stock]="product.stock < 10" class="stock-badge">
                 {{ product.stock }} uds

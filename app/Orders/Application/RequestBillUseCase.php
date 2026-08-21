@@ -5,17 +5,31 @@ namespace App\Orders\Application;
 use App\Orders\Domain\OrderRepositoryInterface;
 use App\Orders\Domain\OrderStatus;
 use App\Orders\Domain\TableStatus;
+use App\Orders\Domain\TaxCalculatorInterface;
+use App\Orders\Infrastructure\Tax\TaxCountryConfig;
 use Illuminate\Support\Facades\DB;
 
 class RequestBillUseCase
 {
     public function __construct(
-        private OrderRepositoryInterface $orderRepository
+        private OrderRepositoryInterface $orderRepository,
+        private TaxCalculatorInterface $taxCalculator
     ) {
     }
 
     /**
-     * @return array{tableId: int, orderIds: list<int>, items: list<array{name: string, price: float|int|string, quantity: int}>, total: float}
+     * @return array{
+     *   tableId: int,
+     *   orderIds: list<int>,
+     *   items: list<array{name: string, price: float|int|string, quantity: int}>,
+     *   subtotal: float,
+     *   taxLabel: string,
+     *   taxRate: float,
+     *   taxAmount: float,
+     *   total: float,
+     *   currency: string,
+     *   country: string
+     * }
      */
     public function execute(int $tableId): array
     {
@@ -29,16 +43,20 @@ class RequestBillUseCase
         }
 
         $items = [];
-        $total = 0.0;
+        $subtotal = 0.0;
         $orderIds = [];
 
         foreach ($active as $order) {
             $orderIds[] = (int) $order->getId();
-            $total += $order->total();
+            $subtotal += $order->total();
             foreach ($order->getItems() as $item) {
                 $items[] = $item;
             }
         }
+
+        $subtotal = round($subtotal, 2);
+        $taxAmount = $this->taxCalculator->calculate($subtotal);
+        $country = TaxCountryConfig::currentCountry();
 
         DB::table('tables')->where('id', $tableId)->update([
             'status' => TableStatus::BillRequested->value,
@@ -49,7 +67,13 @@ class RequestBillUseCase
             'tableId' => $tableId,
             'orderIds' => $orderIds,
             'items' => $items,
-            'total' => $total,
+            'subtotal' => $subtotal,
+            'taxLabel' => $this->taxCalculator->getLabel(),
+            'taxRate' => $this->taxCalculator->getRate(),
+            'taxAmount' => $taxAmount,
+            'total' => round($subtotal + $taxAmount, 2),
+            'currency' => TaxCountryConfig::currency($country),
+            'country' => $country,
         ];
     }
 }

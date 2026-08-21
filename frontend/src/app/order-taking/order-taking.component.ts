@@ -18,7 +18,7 @@ export class OrderTakingComponent implements OnInit {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
 
-  constructor(private ordersService: OrdersService) {}
+  constructor(readonly ordersService: OrdersService) {}
 
   ngOnInit(): void {
     this.loadProducts();

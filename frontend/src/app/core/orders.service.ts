@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Observable, of, throwError, interval } from 'rxjs';
-import { catchError, tap, mergeMap } from 'rxjs/operators';
+import { Injectable, signal } from '@angular/core';
+import { Observable, of, throwError, interval, tap } from 'rxjs';
+import { catchError, mergeMap } from 'rxjs/operators';
 
 export interface OrderItem {
   name: string;
@@ -27,7 +27,13 @@ export interface TableBill {
   tableId: number;
   orderIds: number[];
   items: OrderItem[];
+  subtotal: number;
+  taxLabel: string;
+  taxRate: number;
+  taxAmount: number;
   total: number;
+  currency: string;
+  country: string;
 }
 
 export interface Product {
@@ -37,13 +43,46 @@ export interface Product {
   stock: number;
 }
 
+export interface EstablishmentOption {
+  country: string;
+  currency: string;
+  name: string;
+}
+
+export interface EstablishmentContext {
+  country: string;
+  currency: string;
+  name: string;
+  taxLabel: string;
+  taxRate: number;
+  options: EstablishmentOption[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class OrdersService {
   private readonly baseUrl = '/api';
   private readonly STORAGE_KEY = 'resto_offline_orders';
+  readonly establishment = signal<EstablishmentContext | null>(null);
 
   constructor(private http: HttpClient) {
     this.startSyncTimer();
+    this.loadEstablishment().subscribe();
+  }
+
+  currencyCode(): string {
+    return this.establishment()?.currency ?? 'EUR';
+  }
+
+  loadEstablishment(): Observable<EstablishmentContext> {
+    return this.http.get<EstablishmentContext>(`${this.baseUrl}/establishment`).pipe(
+      tap((ctx) => this.establishment.set(ctx))
+    );
+  }
+
+  setEstablishmentCountry(country: string): Observable<EstablishmentContext> {
+    return this.http.put<EstablishmentContext>(`${this.baseUrl}/establishment`, { country }).pipe(
+      tap((ctx) => this.establishment.set(ctx))
+    );
   }
 
   getTables(): Observable<RestaurantTable[]> {
@@ -64,9 +103,8 @@ export class OrdersService {
 
         console.warn('Network error detected. Saving order locally for offline synchronization...', error);
         this.saveOffline({ tableId, items });
-        // Simular respuesta exitosa para el flujo UI local
         const mockOrder: Order = {
-          id: -Date.now(), // ID negativo temporal
+          id: -Date.now(),
           tableId,
           status: 'offline_pending',
           items,
@@ -105,7 +143,6 @@ export class OrdersService {
   }
 
   private startSyncTimer(): void {
-    // Intentar sincronizar cada 30 segundos
     interval(30000).pipe(
       mergeMap(() => {
         const offlineOrders = this.getOfflineOrders();
@@ -131,7 +168,6 @@ export class OrdersService {
       mergeMap(() => this.syncOrdersSequentially(remaining)),
       catchError((err) => {
         console.warn('Sync failed, offline orders retained for next retry:', err.message);
-        // Volver a escribir las órdenes fallidas
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(orders));
         return throwError(() => err);
       })

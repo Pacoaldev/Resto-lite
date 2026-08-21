@@ -14,7 +14,7 @@ export class InventoryViewComponent {
   readonly products = signal<Product[]>([]);
   readonly loadError = signal<string | null>(null);
 
-  constructor(private ordersService: OrdersService) {
+  constructor(readonly ordersService: OrdersService) {
     effect(() => {
       this.refreshKey();
       this.loadInventory();

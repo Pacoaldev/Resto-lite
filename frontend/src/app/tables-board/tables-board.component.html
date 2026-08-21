@@ -73,10 +73,22 @@
       <h3>Cuenta — mesa {{ currentBill.tableId }}</h3>
       <ul>
         @for (item of currentBill.items; track $index) {
-          <li>{{ item.quantity }} × {{ item.name }} — {{ item.price * item.quantity | number: '1.2-2' }} €</li>
+          <li>
+            {{ item.quantity }} × {{ item.name }} —
+            {{ item.price * item.quantity | currency: currentBill.currency:'symbol':'1.2-2' }}
+          </li>
         }
       </ul>
-      <p class="bill-total"><strong>Total: {{ currentBill.total | number: '1.2-2' }} €</strong></p>
+      <div class="bill-totals">
+        <p>Subtotal: {{ currentBill.subtotal | currency: currentBill.currency:'symbol':'1.2-2' }}</p>
+        <p>
+          {{ currentBill.taxLabel }} ({{ currentBill.taxRate * 100 | number:'1.0-0' }}%):
+          {{ currentBill.taxAmount | currency: currentBill.currency:'symbol':'1.2-2' }}
+        </p>
+        <p class="bill-total">
+          <strong>Total: {{ currentBill.total | currency: currentBill.currency:'symbol':'1.2-2' }}</strong>
+        </p>
+      </div>
       <button
         type="button"
         class="action-btn settle"

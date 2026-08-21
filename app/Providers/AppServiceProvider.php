@@ -18,18 +18,7 @@ class AppServiceProvider extends ServiceProvider
 
         $this->app->bind(
             \App\Orders\Domain\TaxCalculatorInterface::class,
-            function ($app) {
-                $country = strtolower(env('TAX_COUNTRY', 'es'));
-
-                return match ($country) {
-                    'mx', 'mexico' => new \App\Orders\Infrastructure\Tax\MexicoTaxCalculator(),
-                    'ar', 'argentina' => new \App\Orders\Infrastructure\Tax\ArgentinaTaxCalculator(),
-                    'cl', 'chile' => new \App\Orders\Infrastructure\Tax\ChileTaxCalculator(),
-                    'co', 'colombia' => new \App\Orders\Infrastructure\Tax\ColombiaTaxCalculator(),
-                    'pe', 'peru' => new \App\Orders\Infrastructure\Tax\PeruTaxCalculator(),
-                    default => new \App\Orders\Infrastructure\Tax\SpainTaxCalculator(),
-                };
-            }
+            fn () => \App\Orders\Infrastructure\Tax\TaxCountryConfig::calculator()
         );
     }
 

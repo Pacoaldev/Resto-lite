@@ -5,7 +5,9 @@ use App\Orders\Application\RequestBillUseCase;
 use App\Orders\Application\SettleTableUseCase;
 use App\Orders\Domain\OrderRepositoryInterface;
 use App\Orders\Infrastructure\Persistence\EloquentOrderRepository;
+use App\Orders\Infrastructure\Tax\TaxCountryConfig;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 
@@ -14,6 +16,8 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->app->bind(OrderRepositoryInterface::class, EloquentOrderRepository::class);
     Event::fake();
+    Cache::forget(TaxCountryConfig::CACHE_KEY);
+    TaxCountryConfig::setCountry('es');
 
     DB::table('tables')->insert([
         'id' => 1,
@@ -43,14 +47,19 @@ it('marca la mesa como ocupada al crear un pedido', function () {
     expect(DB::table('tables')->where('id', 1)->value('status'))->toBe('occupied');
 });
 
-it('genera la cuenta y marca billRequested; al cobrar vuelve a libre', function () {
+it('genera la cuenta con IVA y marca billRequested; al cobrar vuelve a libre', function () {
     app(CreateOrderUseCase::class)->execute(1, [
         ['name' => 'Tostada', 'price' => 2.5, 'quantity' => 2],
     ]);
 
     $bill = app(RequestBillUseCase::class)->execute(1);
 
-    expect($bill['total'])->toBe(5.0)
+    expect($bill['subtotal'])->toBe(5.0)
+        ->and($bill['taxLabel'])->toBe('IVA')
+        ->and($bill['taxRate'])->toBe(0.21)
+        ->and($bill['taxAmount'])->toBe(1.05)
+        ->and($bill['total'])->toBe(6.05)
+        ->and($bill['currency'])->toBe('EUR')
         ->and($bill['orderIds'])->not->toBeEmpty()
         ->and(DB::table('tables')->where('id', 1)->value('status'))->toBe('billRequested');
 
@@ -66,4 +75,36 @@ it('libera una mesa billRequested aunque no tenga pedidos abiertos', function ()
     app(SettleTableUseCase::class)->execute(1);
 
     expect(DB::table('tables')->where('id', 1)->value('status'))->toBe('free');
+});
+
+it('aplica IVA mexicano al cambiar el establecimiento', function () {
+    TaxCountryConfig::setCountry('mx');
+    $this->app->forgetInstance(RequestBillUseCase::class);
+
+    app(CreateOrderUseCase::class)->execute(1, [
+        ['name' => 'Tostada', 'price' => 2.5, 'quantity' => 2],
+    ]);
+
+    $bill = app(RequestBillUseCase::class)->execute(1);
+
+    expect($bill['country'])->toBe('mx')
+        ->and($bill['currency'])->toBe('MXN')
+        ->and($bill['taxRate'])->toBe(0.16)
+        ->and($bill['taxAmount'])->toBe(0.8)
+        ->and($bill['total'])->toBe(5.8);
+});
+
+it('expone y actualiza el contexto fiscal del establecimiento', function () {
+    $this->getJson('/api/establishment')
+        ->assertOk()
+        ->assertJsonPath('country', 'es')
+        ->assertJsonPath('currency', 'EUR')
+        ->assertJsonPath('taxRate', 0.21);
+
+    $this->putJson('/api/establishment', ['country' => 'pe'])
+        ->assertOk()
+        ->assertJsonPath('country', 'pe')
+        ->assertJsonPath('currency', 'PEN')
+        ->assertJsonPath('taxLabel', 'IGV')
+        ->assertJsonPath('taxRate', 0.18);
 });

@@ -121,7 +121,18 @@
     padding-left: 1.1rem;
   }
 
-  .bill-total {
+  .bill-totals {
     margin: 0 0 0.75rem;
+    font-size: 0.9rem;
+    color: #334155;
+
+    p {
+      margin: 0.2rem 0;
+    }
+  }
+
+  .bill-total {
+    margin: 0.5rem 0 0.75rem;
+    color: #0f172a;
   }
 }

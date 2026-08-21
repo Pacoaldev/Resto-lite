@@ -22,11 +22,29 @@ describe('Tablero de Mesas y Toma de Pedidos E2E', () => {
         tableId: 2,
         orderIds: [1],
         items: [{ name: 'Café', price: 2.5, quantity: 1 }],
-        total: 2.5,
+        subtotal: 2.5,
+        taxLabel: 'IVA',
+        taxRate: 0.21,
+        taxAmount: 0.53,
+        total: 3.03,
+        currency: 'EUR',
+        country: 'es',
       },
     }).as('requestBill');
 
     cy.intercept('POST', '/api/tables/*/settle', { statusCode: 204 }).as('settle');
+
+    cy.intercept('GET', '/api/establishment', {
+      country: 'es',
+      currency: 'EUR',
+      name: 'España — Madrid',
+      taxLabel: 'IVA',
+      taxRate: 0.21,
+      options: [
+        { country: 'es', currency: 'EUR', name: 'España — Madrid' },
+        { country: 'mx', currency: 'MXN', name: 'México — CDMX' },
+      ],
+    }).as('getEstablishment');
 
     cy.visit('/');
   });

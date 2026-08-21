@@ -4,7 +4,7 @@
   @for (item of availableItems(); track item.name) {
     <div class="itemRow">
       <span class="itemName">{{ item.name }}</span>
-      <span class="itemPrice">{{ item.price | currency:'EUR':'symbol':'1.2-2' }}</span>
+      <span class="itemPrice">{{ item.price | currency: ordersService.currencyCode():'symbol':'1.2-2' }}</span>
       <span class="itemStock">max {{ item.stock }}</span>
       <input
         type="number"
