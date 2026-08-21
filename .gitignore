@@ -17,3 +17,25 @@ yarn-error.log
 /.idea
 /.vscode
 /informacion_util
+
+# Laravel storage logs & cache
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*
+!/storage/app/.gitignore
+!/storage/framework/.gitignore
+!/storage/logs/.gitignore
+
+# Angular specific files
+/frontend/dist/
+/frontend/.angular/
+/frontend/node_modules/
+/frontend/npm-debug.log
+/frontend/yarn-error.log
+/frontend/.env
+
+# OS specific files
+.DS_Store
+Thumbs.db
