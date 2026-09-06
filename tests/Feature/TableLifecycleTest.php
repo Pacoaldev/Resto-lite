@@ -6,6 +6,7 @@ use App\Orders\Application\SettleTableUseCase;
 use App\Orders\Domain\OrderRepositoryInterface;
 use App\Orders\Infrastructure\Persistence\EloquentOrderRepository;
 use App\Orders\Infrastructure\Tax\TaxCountryConfig;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -101,7 +102,12 @@ it('expone y actualiza el contexto fiscal del establecimiento', function () {
         ->assertJsonPath('currency', 'EUR')
         ->assertJsonPath('taxRate', 0.21);
 
-    $this->putJson('/api/establishment', ['country' => 'pe'])
+    $this->actingAs(User::create([
+        'name' => 'Admin',
+        'email' => 'admin@resto.test',
+        'password' => bcrypt('secret'),
+    ]))
+        ->putJson('/api/establishment', ['country' => 'pe'])
         ->assertOk()
         ->assertJsonPath('country', 'pe')
         ->assertJsonPath('currency', 'PEN')

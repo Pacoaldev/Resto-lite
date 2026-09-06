@@ -18,7 +18,7 @@ class CreateOrderUseCase
 
     public function execute(int $tableId, array $items): Order
     {
-        return DB::transaction(function () use ($tableId, $items) {
+        $order = DB::transaction(function () use ($tableId, $items): Order {
             $this->reserveStock($items);
 
             $order = new Order(tableId: $tableId, items: $items);
@@ -29,14 +29,17 @@ class CreateOrderUseCase
                 'updated_at' => now(),
             ]);
 
-            event(new OrderCreatedEvent(
-                orderId: $order->getId(),
-                tableId: $order->getTableId(),
-                total: $order->total()
-            ));
-
             return $order;
         });
+
+        // ponytail: event() after the transaction commits so listeners read post-update table state
+        event(new OrderCreatedEvent(
+            orderId: $order->getId(),
+            tableId: $order->getTableId(),
+            total: $order->total()
+        ));
+
+        return $order;
     }
 
     /**

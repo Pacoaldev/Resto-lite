@@ -16,30 +16,36 @@ class ChangeOrderStatusUseCase
 
     public function execute(int $orderId, OrderStatus $newStatus): void
     {
-        $order = $this->orderRepository->findById($orderId);
+        DB::transaction(function () use ($orderId, $newStatus): void {
+            $order = $this->orderRepository->findById($orderId);
 
-        if (!$order) {
-            throw new \DomainException('Pedido no encontrado');
-        }
+            if (!$order) {
+                throw new \DomainException('Pedido no encontrado');
+            }
 
-        $order->changeStatus($newStatus);
-        $this->orderRepository->save($order);
+            $order->changeStatus($newStatus);
+            $this->orderRepository->save($order);
 
-        if (!in_array($newStatus, [OrderStatus::Paid, OrderStatus::Cancelled], true)) {
-            return;
-        }
+            if (!in_array($newStatus, [OrderStatus::Paid, OrderStatus::Cancelled], true)) {
+                return;
+            }
 
-        $tableId = $order->getTableId();
-        $stillActive = array_filter(
-            $this->orderRepository->findByTableId($tableId),
-            fn ($o) => in_array($o->getStatus(), [OrderStatus::Open, OrderStatus::Sent], true)
-        );
+            $tableId = $order->getTableId();
+            $stillActive = array_filter(
+                $this->orderRepository->findByTableId($tableId),
+                fn ($o) => in_array($o->getStatus(), [OrderStatus::Open, OrderStatus::Sent], true)
+            );
 
-        if ($stillActive === []) {
-            DB::table('tables')->where('id', $tableId)->update([
-                'status' => TableStatus::Free->value,
-                'updated_at' => now(),
-            ]);
-        }
+            if ($stillActive !== []) {
+                return;
+            }
+
+            DB::table('tables')
+                ->where('id', $tableId)
+                ->update([
+                    'status' => TableStatus::Free->value,
+                    'updated_at' => now(),
+                ]);
+        });
     }
 }

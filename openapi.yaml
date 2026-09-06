@@ -18,6 +18,44 @@ paths:
                 items:
                   $ref: '#/components/schemas/Table'
 
+  /api/tables/{id}/request-bill:
+    post:
+      summary: Solicitar cuenta de una mesa
+      description: Genera la factura con IVA del país configurado para los pedidos activos de la mesa y la marca como `billRequested`.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Cuenta generada con éxito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bill'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/DomainError'
+
+  /api/tables/{id}/settle:
+    post:
+      summary: Cobrar y liberar una mesa
+      description: Marca los pedidos activos como pagados y libera la mesa.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Mesa liberada.
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /api/products:
     get:
       summary: Listar productos del menú
@@ -35,7 +73,7 @@ paths:
   /api/orders:
     post:
       summary: Crear un pedido
-      description: Crea un nuevo pedido asociado a una mesa específica.
+      description: Crea un nuevo pedido asociado a una mesa específica. Los precios se resuelven server-side; el cliente sólo envía nombre y cantidad.
       requestBody:
         required: true
         content:
@@ -51,6 +89,7 @@ paths:
                   example: 1
                 items:
                   type: array
+                  minItems: 1
                   items:
                     $ref: '#/components/schemas/OrderItemInput'
       responses:
@@ -60,6 +99,12 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Order'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/StockConflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
 
   /api/orders/{id}/status:
     patch:
@@ -85,11 +130,91 @@ paths:
                   enum: [open, sent, paid, cancelled]
                   example: sent
       responses:
-        '200':
+        '204':
           description: Estado del pedido actualizado con éxito.
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/DomainError'
+
+  /api/establishment:
+    get:
+      summary: Obtener configuración fiscal
+      description: Devuelve el país activo, moneda, nombre, etiqueta y tasa de impuesto.
+      responses:
+        '200':
+          description: Configuración fiscal actual.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Establishment'
+    put:
+      summary: Cambiar país fiscal
+      description: Cambia el país del establecimiento en runtime (afecta a todos los cálculos de IVA/IGV).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - country
+              properties:
+                country:
+                  type: string
+                  enum: [es, mx, ar, cl, co, pe]
+      responses:
+        '200':
+          description: País actualizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Establishment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
 
 components:
+  responses:
+    NotFound:
+      description: Recurso no encontrado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    DomainError:
+      description: Transición de estado no permitida por el dominio.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationError:
+      description: Error de validación.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    StockConflict:
+      description: Stock insuficiente para uno o más productos.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Autenticación requerida.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
   schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+
     Table:
       type: object
       properties:
@@ -124,8 +249,15 @@ components:
       type: object
       required:
         - name
-        - price
         - quantity
+      properties:
+        name:
+          type: string
+        quantity:
+          type: integer
+
+    OrderItem:
+      type: object
       properties:
         name:
           type: string
@@ -144,7 +276,70 @@ components:
           type: integer
         status:
           type: string
+          enum: [open, sent, paid, cancelled]
         items:
           type: array
           items:
-            $ref: '#/components/schemas/OrderItemInput'
+            $ref: '#/components/schemas/OrderItem'
+        total:
+          type: number
+          format: float
+
+    Bill:
+      type: object
+      properties:
+        tableId:
+          type: integer
+        orderIds:
+          type: array
+          items:
+            type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderItem'
+        subtotal:
+          type: number
+          format: float
+        taxLabel:
+          type: string
+        taxRate:
+          type: number
+          format: float
+        taxAmount:
+          type: number
+          format: float
+        total:
+          type: number
+          format: float
+        currency:
+          type: string
+        country:
+          type: string
+
+    Establishment:
+      type: object
+      properties:
+        country:
+          type: string
+          enum: [es, mx, ar, cl, co, pe]
+        currency:
+          type: string
+        name:
+          type: string
+        taxLabel:
+          type: string
+        taxRate:
+          type: number
+          format: float
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              country:
+                type: string
+              currency:
+                type: string
+              name:
+                type: string

@@ -4,7 +4,6 @@ namespace App\Orders\Infrastructure\Http;
 
 use App\Orders\Application\ChangeOrderStatusUseCase;
 use App\Orders\Application\CreateOrderUseCase;
-use App\Orders\Domain\InsufficientStockException;
 use App\Orders\Domain\OrderStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,19 +22,17 @@ class OrderController extends Controller
         $validated = $request->validate([
             'tableId' => 'required|integer|exists:tables,id',
             'items' => 'required|array|min:1',
-            'items.*.name' => 'required|string',
-            'items.*.price' => 'required|numeric|min:0',
+            'items.*.name' => 'required|string|max:255|exists:products,name',
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        try {
-            $order = $this->createOrderUseCase->execute(
-                tableId: $validated['tableId'],
-                items: $validated['items']
-            );
-        } catch (InsufficientStockException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
-        }
+        // ponytail: prices come from the server, never the client — drop price from the request contract
+        $items = $this->resolveItemsFromCatalog($validated['items']);
+
+        $order = $this->createOrderUseCase->execute(
+            tableId: $validated['tableId'],
+            items: $items
+        );
 
         return response()->json([
             'id' => $order->getId(),
@@ -46,17 +43,35 @@ class OrderController extends Controller
         ], 201);
     }
 
-    public function updateStatus(Request $request, int $orderId): JsonResponse
+    public function updateStatus(Request $request, int $id): JsonResponse
     {
         $validated = $request->validate([
             'status' => 'required|in:open,sent,paid,cancelled',
         ]);
 
         $this->changeOrderStatusUseCase->execute(
-            orderId: $orderId,
+            orderId: $id,
             newStatus: OrderStatus::from($validated['status'])
         );
 
         return response()->json(status: 204);
+    }
+
+    /**
+     * @param array<int, array{name: string, quantity: int}> $items
+     * @return array<int, array{name: string, price: float, quantity: int}>
+     */
+    private function resolveItemsFromCatalog(array $items): array
+    {
+        $catalog = \Illuminate\Support\Facades\DB::table('products')
+            ->whereIn('name', array_column($items, 'name'))
+            ->get(['name', 'price'])
+            ->keyBy('name');
+
+        return array_map(fn (array $item): array => [
+            'name' => $item['name'],
+            'price' => (float) $catalog[$item['name']]->price,
+            'quantity' => (int) $item['quantity'],
+        ], $items);
     }
 }

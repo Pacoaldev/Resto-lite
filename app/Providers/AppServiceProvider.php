@@ -15,6 +15,14 @@ class AppServiceProvider extends ServiceProvider
             \App\Orders\Domain\OrderRepositoryInterface::class,
             \App\Orders\Infrastructure\Persistence\EloquentOrderRepository::class
         );
+        $this->app->bind(
+            \App\Orders\Domain\TableRepositoryInterface::class,
+            \App\Orders\Infrastructure\Persistence\EloquentTableRepository::class
+        );
+        $this->app->bind(
+            \App\Orders\Domain\ProductRepositoryInterface::class,
+            \App\Orders\Infrastructure\Persistence\EloquentProductRepository::class
+        );
 
         $this->app->bind(
             \App\Orders\Domain\TaxCalculatorInterface::class,

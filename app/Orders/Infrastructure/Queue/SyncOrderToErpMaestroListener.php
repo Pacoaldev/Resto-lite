@@ -4,6 +4,7 @@ namespace App\Orders\Infrastructure\Queue;
 
 use App\Orders\Domain\OrderCreatedEvent;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -23,15 +24,19 @@ class SyncOrderToErpMaestroListener implements ShouldQueue
             'tableId' => $event->tableId,
         ]);
 
+        // ponytail: only network errors are swallowed so the queue can retry; business errors must surface
         try {
-            Http::timeout(3)->post($endpoint . '/api/sync/orders', [
-                'externalOrderId' => $event->orderId,
-                'tableId' => $event->tableId,
-                'total' => $event->total,
-                'source' => 'resto-lite',
-            ]);
-        } catch (\Exception $e) {
-            Log::warning('No se pudo conectar con el ERP maestro (simulado), el pedido queda guardado para re-intento offline: ' . $e->getMessage());
+            Http::timeout(3)
+                ->throw()
+                ->post($endpoint . '/api/sync/orders', [
+                    'externalOrderId' => $event->orderId,
+                    'tableId' => $event->tableId,
+                    'total' => $event->total,
+                    'source' => 'resto-lite',
+                ]);
+        } catch (ConnectionException $e) {
+            Log::warning('Conexión fallida con el ERP maestro, re-intento por cola: ' . $e->getMessage());
+            throw $e;
         }
     }
 }

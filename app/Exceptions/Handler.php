@@ -2,7 +2,9 @@
 
 namespace App\Exceptions;
 
+use App\Orders\Domain\InsufficientStockException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -22,7 +24,7 @@ class Handler extends ExceptionHandler
      * @var array<int, class-string<\Throwable>>
      */
     protected $dontReport = [
-        //
+        InsufficientStockException::class,
     ];
 
     /**
@@ -43,6 +45,15 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             //
+        });
+
+        $this->renderable(function (InsufficientStockException $e, Request $request) {
+            return response()->json(['message' => $e->getMessage()], 409);
+        });
+
+        $this->renderable(function (\DomainException $e, Request $request) {
+            // ponytail: domain exceptions become 422 by default; controllers no longer need try/catch
+            return response()->json(['message' => $e->getMessage()], 422);
         });
     }
 }

@@ -33,47 +33,54 @@ class RequestBillUseCase
      */
     public function execute(int $tableId): array
     {
-        $active = array_values(array_filter(
-            $this->orderRepository->findByTableId($tableId),
-            fn ($order) => in_array($order->getStatus(), [OrderStatus::Open, OrderStatus::Sent], true)
-        ));
+        return DB::transaction(function () use ($tableId): array {
+            DB::table('tables')
+                ->where('id', $tableId)
+                ->lockForUpdate()
+                ->first();
 
-        if ($active === []) {
-            throw new \DomainException('No hay pedidos abiertos para generar la cuenta');
-        }
+            $active = array_values(array_filter(
+                $this->orderRepository->findByTableId($tableId),
+                fn ($order) => in_array($order->getStatus(), [OrderStatus::Open, OrderStatus::Sent], true)
+            ));
 
-        $items = [];
-        $subtotal = 0.0;
-        $orderIds = [];
-
-        foreach ($active as $order) {
-            $orderIds[] = (int) $order->getId();
-            $subtotal += $order->total();
-            foreach ($order->getItems() as $item) {
-                $items[] = $item;
+            if ($active === []) {
+                throw new \DomainException('No hay pedidos abiertos para generar la cuenta');
             }
-        }
 
-        $subtotal = round($subtotal, 2);
-        $taxAmount = $this->taxCalculator->calculate($subtotal);
-        $country = TaxCountryConfig::currentCountry();
+            $items = [];
+            $subtotal = 0.0;
+            $orderIds = [];
 
-        DB::table('tables')->where('id', $tableId)->update([
-            'status' => TableStatus::BillRequested->value,
-            'updated_at' => now(),
-        ]);
+            foreach ($active as $order) {
+                $orderIds[] = (int) $order->getId();
+                $subtotal += $order->total();
+                foreach ($order->getItems() as $item) {
+                    $items[] = $item;
+                }
+            }
 
-        return [
-            'tableId' => $tableId,
-            'orderIds' => $orderIds,
-            'items' => $items,
-            'subtotal' => $subtotal,
-            'taxLabel' => $this->taxCalculator->getLabel(),
-            'taxRate' => $this->taxCalculator->getRate(),
-            'taxAmount' => $taxAmount,
-            'total' => round($subtotal + $taxAmount, 2),
-            'currency' => TaxCountryConfig::currency($country),
-            'country' => $country,
-        ];
+            $subtotal = round($subtotal, 2);
+            $taxAmount = $this->taxCalculator->calculate($subtotal);
+            $country = TaxCountryConfig::currentCountry();
+
+            DB::table('tables')->where('id', $tableId)->update([
+                'status' => TableStatus::BillRequested->value,
+                'updated_at' => now(),
+            ]);
+
+            return [
+                'tableId' => $tableId,
+                'orderIds' => $orderIds,
+                'items' => $items,
+                'subtotal' => $subtotal,
+                'taxLabel' => $this->taxCalculator->getLabel(),
+                'taxRate' => $this->taxCalculator->getRate(),
+                'taxAmount' => $taxAmount,
+                'total' => round($subtotal + $taxAmount, 2),
+                'currency' => TaxCountryConfig::currency($country),
+                'country' => $country,
+            ];
+        });
     }
 }
