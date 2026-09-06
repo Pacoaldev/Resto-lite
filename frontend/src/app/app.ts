@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { TablesBoardComponent } from './tables-board/tables-board.component';
 import { OrderTakingComponent } from './order-taking/order-taking.component';
 import { InventoryViewComponent } from './inventory-view/inventory-view.component';
-import { OrdersService } from './core/orders.service';
+import { OrdersService, Order } from './core/orders.service';
 
 type WorkspaceSection = 'sala' | 'inventario';
 
@@ -20,6 +20,7 @@ export class App {
   readonly switchingCountry = signal(false);
   readonly section = signal<WorkspaceSection>('sala');
   readonly salaBusyCount = signal(0);
+  readonly recentOrders = signal<Order[]>([]);
 
   readonly taxSummary = computed(() => {
     const est = this.ordersService.establishment();
@@ -29,7 +30,9 @@ export class App {
     return `${est.taxLabel} ${(est.taxRate * 100).toFixed(0)}% · ${est.currency}`;
   });
 
-  constructor(readonly ordersService: OrdersService) {}
+  constructor(readonly ordersService: OrdersService) {
+    this.refreshRecentOrders();
+  }
 
   setSection(section: WorkspaceSection): void {
     this.section.set(section);
@@ -47,6 +50,7 @@ export class App {
     this.selectedTableId.set(null);
     this.inventoryTick.update((n) => n + 1);
     this.tablesTick.update((n) => n + 1);
+    this.refreshRecentOrders();
   }
 
   onBoardChanged(busyCount: number): void {
@@ -60,6 +64,13 @@ export class App {
     this.ordersService.setEstablishmentCountry(country).subscribe({
       next: () => this.switchingCountry.set(false),
       error: () => this.switchingCountry.set(false),
+    });
+  }
+
+  private refreshRecentOrders(): void {
+    this.ordersService.getRecentOrders().subscribe({
+      next: (orders) => this.recentOrders.set(orders),
+      error: () => this.recentOrders.set([]),
     });
   }
 }

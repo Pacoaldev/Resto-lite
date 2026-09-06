@@ -71,6 +71,26 @@ paths:
                   $ref: '#/components/schemas/Product'
 
   /api/orders:
+    get:
+      summary: Listar pedidos recientes
+      description: Devuelve los últimos pedidos del sistema, ordenados del más reciente al más antiguo.
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            maximum: 50
+      responses:
+        '200':
+          description: Listado de pedidos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
     post:
       summary: Crear un pedido
       description: Crea un nuevo pedido asociado a una mesa específica. Los precios se resuelven server-side; el cliente sólo envía nombre y cantidad.

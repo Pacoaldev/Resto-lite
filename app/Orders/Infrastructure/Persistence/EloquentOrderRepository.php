@@ -37,6 +37,19 @@ class EloquentOrderRepository implements OrderRepositoryInterface
             ->all();
     }
 
+    public function findRecent(int $limit = 10): array
+    {
+        /** @var \Illuminate\Database\Eloquent\Collection<int, OrderModel> $models */
+        $models = OrderModel::query()
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+
+        return $models
+            ->map(fn (OrderModel $model) => $this->toDomain($model))
+            ->all();
+    }
+
     private function toDomain(OrderModel $model): Order
     {
         return new Order(

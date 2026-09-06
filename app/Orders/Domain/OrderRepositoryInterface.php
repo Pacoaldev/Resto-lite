@@ -9,4 +9,7 @@ interface OrderRepositoryInterface
     public function findById(int $id): ?Order;
 
     public function findByTableId(int $tableId): array;
+
+    /** @return list<Order> */
+    public function findRecent(int $limit = 10): array;
 }

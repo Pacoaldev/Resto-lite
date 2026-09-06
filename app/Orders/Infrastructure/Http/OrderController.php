@@ -4,6 +4,7 @@ namespace App\Orders\Infrastructure\Http;
 
 use App\Orders\Application\ChangeOrderStatusUseCase;
 use App\Orders\Application\CreateOrderUseCase;
+use App\Orders\Application\ListRecentOrdersUseCase;
 use App\Orders\Domain\OrderStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -13,8 +14,28 @@ class OrderController extends Controller
 {
     public function __construct(
         private CreateOrderUseCase $createOrderUseCase,
-        private ChangeOrderStatusUseCase $changeOrderStatusUseCase
+        private ChangeOrderStatusUseCase $changeOrderStatusUseCase,
+        private ListRecentOrdersUseCase $listRecentOrdersUseCase
     ) {
+    }
+
+    public function index(Request $request): JsonResponse
+    {
+        $limit = (int) $request->query('limit', '10');
+        $limit = max(1, min($limit, 50));
+
+        $orders = array_map(
+            fn ($order) => [
+                'id' => $order->getId(),
+                'tableId' => $order->getTableId(),
+                'status' => $order->getStatus()->value,
+                'items' => $order->getItems(),
+                'total' => $order->total(),
+            ],
+            $this->listRecentOrdersUseCase->execute($limit)
+        );
+
+        return response()->json($orders);
     }
 
     public function store(Request $request): JsonResponse

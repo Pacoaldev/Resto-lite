@@ -460,6 +460,57 @@ body {
   color: #94a3b8;
 }
 
+.recent-orders {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.recent-order {
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #ffffff;
+  padding: 0.6rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.recent-order-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.recent-order-status {
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.recent-order-meta {
+  font-size: 0.78rem;
+  color: #475569;
+}
+
+.recent-empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  text-align: center;
+  padding: 1rem;
+  border: 1px dashed #e2e8f0;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+
 @media (max-width: 1180px) {
   .workspace-grid {
     grid-template-columns: 1fr;

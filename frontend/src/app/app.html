@@ -104,7 +104,24 @@
           <section class="panel panel-rail compact">
             <h3 class="rail-title">Pedidos recientes</h3>
             <p class="rail-hint">Resumen operativo del turno — demo Lite.</p>
-            <div class="rail-placeholder">Summary</div>
+            @if (recentOrders().length > 0) {
+              <ul class="recent-orders">
+                @for (order of recentOrders(); track order.id) {
+                  <li class="recent-order" [attr.data-status]="order.status">
+                    <div class="recent-order-head">
+                      <span class="recent-order-id">Pedido #{{ order.id }}</span>
+                      <span class="recent-order-status">{{ order.status }}</span>
+                    </div>
+                    <div class="recent-order-meta">
+                      Mesa {{ order.tableId }} ·
+                      {{ order.total | currency: ordersService.currencyCode():'symbol':'1.2-2' }}
+                    </div>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="recent-empty">Sin pedidos todavía.</p>
+            }
           </section>
         </aside>
       </div>

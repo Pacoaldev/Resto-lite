@@ -93,6 +93,10 @@ export class OrdersService {
     return this.http.get<Product[]>(`${this.baseUrl}/products`);
   }
 
+  getRecentOrders(limit = 10): Observable<Order[]> {
+    return this.http.get<Order[]>(`${this.baseUrl}/orders`, { params: { limit } });
+  }
+
   createOrder(tableId: number, items: OrderItem[]): Observable<Order> {
     return this.http.post<Order>(`${this.baseUrl}/orders`, { tableId, items }).pipe(
       catchError((error) => {
