@@ -6,7 +6,7 @@ use App\Orders\Infrastructure\Http\OrderController;
 use App\Orders\Infrastructure\Http\EstablishmentController;
 use Illuminate\Support\Facades\Route;
 
-// ponytail: no auth in the PoC (no Sanctum installed); add `->middleware('auth')` here when Sanctum is wired
+// ponytail: no auth in the PoC (no Sanctum installed); add `->middleware('auth:sanctum')` here when Sanctum is wired
 Route::get('/tables', [TableController::class, 'index']);
 Route::post('/tables/{id}/request-bill', [TableController::class, 'requestBill']);
 Route::post('/tables/{id}/settle', [TableController::class, 'settle']);

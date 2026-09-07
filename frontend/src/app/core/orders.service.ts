@@ -120,15 +120,51 @@ export class OrdersService {
   }
 
   updateStatus(orderId: number, status: string): Observable<void> {
-    return this.http.patch<void>(`${this.baseUrl}/orders/${orderId}/status`, { status });
+    return this.http.patch<void>(`${this.baseUrl}/orders/${orderId}/status`, { status }).pipe(
+      catchError((error) => {
+        // Solo caer a offline ante fallo de red; 4xx/5xx del API deben propagarse
+        if (error?.status > 0) {
+          return throwError(() => error);
+        }
+
+        console.warn('Network error detected. Saving order status update locally for offline synchronization...', error);
+        // Nota: Para simplificar el demo, no guardamos actualizaciones de estado offline.
+        // En una app real, se necesitaría una cola de acciones pendientes más sofisticada.
+        return throwError(() => error);
+      })
+    );
   }
 
   requestBill(tableId: number): Observable<TableBill> {
-    return this.http.post<TableBill>(`${this.baseUrl}/tables/${tableId}/request-bill`, {});
+    return this.http.post<TableBill>(`${this.baseUrl}/tables/${tableId}/request-bill`, {}).pipe(
+      catchError((error) => {
+        // Solo caer a offline ante fallo de red; 4xx/5xx del API deben propagarse
+        if (error?.status > 0) {
+          return throwError(() => error);
+        }
+
+        console.warn('Network error detected. Saving bill request locally for offline synchronization...', error);
+        // Nota: Para simplificar el demo, no guardamos solicitudes de cuenta offline.
+        // En una app real, se necesitaría una cola de acciones pendientes más sofisticada.
+        return throwError(() => error);
+      })
+    );
   }
 
   settleTable(tableId: number): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/tables/${tableId}/settle`, {});
+    return this.http.post<void>(`${this.baseUrl}/tables/${tableId}/settle`, {}).pipe(
+      catchError((error) => {
+        // Solo caer a offline ante fallo de red; 4xx/5xx del API deben propagarse
+        if (error?.status > 0) {
+          return throwError(() => error);
+        }
+
+        console.warn('Network error detected. Saving table settlement locally for offline synchronization...', error);
+        // Nota: Para simplificar el demo, no guardamos liquidaciones de mesa offline.
+        // En una app real, se necesitaría una cola de acciones pendientes más sofisticada.
+        return throwError(() => error);
+      })
+    );
   }
 
   private saveOffline(orderData: { tableId: number; items: OrderItem[] }): void {
@@ -171,7 +207,15 @@ export class OrdersService {
       tap(() => console.log('Successfully synchronized offline order for table:', current.tableId)),
       mergeMap(() => this.syncOrdersSequentially(remaining)),
       catchError((err) => {
-        console.warn('Sync failed, offline orders retained for next retry:', err.message);
+        // Solo caer a offline ante fallo de red; 4xx/5xx del API deben propagarse
+        if (err?.status > 0) {
+          console.warn('Sync failed with API error, offline orders retained for next retry:', err.message);
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(orders));
+          return throwError(() => err);
+        }
+
+        // Si el error es de red, mantener la orden actual en la cola para reintentar
+        console.warn('Network error during sync, offline orders retained for next retry:', err.message);
         localStorage.setItem(this.STORAGE_KEY, JSON.stringify(orders));
         return throwError(() => err);
       })
