@@ -2,6 +2,7 @@
 
 namespace App\Orders\Application;
 
+use App\Orders\Domain\OrderNotFoundException;
 use App\Orders\Domain\OrderRepositoryInterface;
 use App\Orders\Domain\OrderStatus;
 use App\Orders\Domain\TableStatus;
@@ -20,7 +21,7 @@ class ChangeOrderStatusUseCase
             $order = $this->orderRepository->findById($orderId);
 
             if (!$order) {
-                throw new \DomainException('Pedido no encontrado');
+                throw OrderNotFoundException::withId($orderId);
             }
 
             $order->changeStatus($newStatus);

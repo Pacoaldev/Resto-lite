@@ -34,10 +34,19 @@ class RequestBillUseCase
     public function execute(int $tableId): array
     {
         return DB::transaction(function () use ($tableId): array {
-            DB::table('tables')
+            $table = DB::table('tables')
                 ->where('id', $tableId)
                 ->lockForUpdate()
                 ->first();
+
+            if (!$table) {
+                throw new \DomainException('Mesa no encontrada');
+            }
+
+            // ponytail: si la mesa ya esta en billRequested, la cuenta ya fue generada → 422 idempotente
+            if ($table->status === TableStatus::BillRequested->value) {
+                throw new \DomainException('La cuenta ya fue solicitada para esta mesa');
+            }
 
             $active = array_values(array_filter(
                 $this->orderRepository->findByTableId($tableId),

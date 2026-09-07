@@ -3,6 +3,7 @@
 namespace App\Exceptions;
 
 use App\Orders\Domain\InsufficientStockException;
+use App\Orders\Domain\OrderNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\Request;
 use Throwable;
@@ -49,6 +50,10 @@ class Handler extends ExceptionHandler
 
         $this->renderable(function (InsufficientStockException $e, Request $request) {
             return response()->json(['message' => $e->getMessage()], 409);
+        });
+
+        $this->renderable(function (OrderNotFoundException $e, Request $request) {
+            return response()->json(['message' => $e->getMessage()], 404);
         });
 
         $this->renderable(function (\DomainException $e, Request $request) {

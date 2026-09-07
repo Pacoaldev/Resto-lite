@@ -55,6 +55,9 @@
               <option [value]="opt.country">{{ opt.name }} ({{ opt.currency }})</option>
               }
             </select>
+            @if (countryError(); as err) {
+              <p class="country-error">{{ err }}</p>
+            }
             } @else {
             <h4>Cargando local…</h4>
             <p>Régimen fiscal del establecimiento</p>
@@ -104,7 +107,9 @@
           <section class="panel panel-rail compact">
             <h3 class="rail-title">Pedidos recientes</h3>
             <p class="rail-hint">Resumen operativo del turno — demo Lite.</p>
-            @if (recentOrders().length > 0) {
+            @if (recentOrdersError(); as err) {
+              <p class="recent-error">{{ err }}</p>
+            } @else if (recentOrders().length > 0) {
               <ul class="recent-orders">
                 @for (order of recentOrders(); track order.id) {
                   <li class="recent-order" [attr.data-status]="order.status">

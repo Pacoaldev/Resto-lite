@@ -21,6 +21,8 @@ export class App {
   readonly section = signal<WorkspaceSection>('sala');
   readonly salaBusyCount = signal(0);
   readonly recentOrders = signal<Order[]>([]);
+  readonly recentOrdersError = signal<string | null>(null);
+  readonly countryError = signal<string | null>(null);
 
   readonly taxSummary = computed(() => {
     const est = this.ordersService.establishment();
@@ -61,16 +63,30 @@ export class App {
     const select = event.target as HTMLSelectElement;
     const country = select.value;
     this.switchingCountry.set(true);
+    this.countryError.set(null);
     this.ordersService.setEstablishmentCountry(country).subscribe({
       next: () => this.switchingCountry.set(false),
-      error: () => this.switchingCountry.set(false),
+      error: (err) => {
+        this.switchingCountry.set(false);
+        const message = err?.error?.message;
+        this.countryError.set(typeof message === 'string' ? message : 'No se pudo cambiar el país fiscal');
+        // re-sync del select con el estado real del servidor
+        this.ordersService.loadEstablishment().subscribe();
+      },
     });
   }
 
   private refreshRecentOrders(): void {
     this.ordersService.getRecentOrders().subscribe({
-      next: (orders) => this.recentOrders.set(orders),
-      error: () => this.recentOrders.set([]),
+      next: (orders) => {
+        this.recentOrders.set(orders);
+        this.recentOrdersError.set(null);
+      },
+      error: (err) => {
+        this.recentOrders.set([]);
+        const message = err?.error?.message;
+        this.recentOrdersError.set(typeof message === 'string' ? message : 'No se pudieron cargar los pedidos');
+      },
     });
   }
 }
