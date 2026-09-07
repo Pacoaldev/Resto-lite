@@ -16,6 +16,7 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+/.atl
 /informacion_util
 comandos.md
 start.ps1
