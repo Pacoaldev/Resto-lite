@@ -43,6 +43,21 @@ export interface Product {
   stock: number;
 }
 
+export interface SettleResult {
+  tableId: number;
+  orderIds: number[];
+  payment: {
+    provider: string;
+    status: string;
+    transactionId: string;
+  };
+}
+
+export interface WasteResult {
+  productId: number;
+  stock: number;
+}
+
 export interface EstablishmentOption {
   country: string;
   currency: string;
@@ -151,8 +166,8 @@ export class OrdersService {
     );
   }
 
-  settleTable(tableId: number): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/tables/${tableId}/settle`, {}).pipe(
+  settleTable(tableId: number): Observable<SettleResult> {
+    return this.http.post<SettleResult>(`${this.baseUrl}/tables/${tableId}/settle`, {}).pipe(
       catchError((error) => {
         // Solo caer a offline ante fallo de red; 4xx/5xx del API deben propagarse
         if (error?.status > 0) {
@@ -165,6 +180,14 @@ export class OrdersService {
         return throwError(() => error);
       })
     );
+  }
+
+  registerWaste(productId: number, quantity: number, reason?: string): Observable<WasteResult> {
+    return this.http.post<WasteResult>(`${this.baseUrl}/inventory/waste`, {
+      productId,
+      quantity,
+      reason: reason || null,
+    });
   }
 
   private saveOffline(orderData: { tableId: number; items: OrderItem[] }): void {

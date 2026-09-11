@@ -43,7 +43,7 @@ paths:
   /api/tables/{id}/settle:
     post:
       summary: Cobrar y liberar una mesa
-      description: Marca los pedidos activos como pagados y libera la mesa.
+      description: Cobra vía pasarela stub, marca pedidos activos como pagados y libera la mesa.
       parameters:
         - name: id
           in: path
@@ -51,10 +51,134 @@ paths:
           schema:
             type: integer
       responses:
-        '204':
-          description: Mesa liberada.
+        '200':
+          description: Cobro aprobado y mesa liberada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SettleResult'
         '404':
           $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/DomainError'
+
+  /api/health:
+    get:
+      summary: Healthcheck del servicio
+      description: Comprueba MySQL y Redis. 503 si DB cae; 200 degraded si solo Redis falla.
+      responses:
+        '200':
+          description: Servicio ok o degradado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+        '503':
+          description: Base de datos no disponible.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Health'
+
+  /api/recipes:
+    get:
+      summary: Listar escandallos / recetas
+      responses:
+        '200':
+          description: Listado de recetas con coste teórico y margen.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Recipe'
+
+  /api/recipes/{id}:
+    get:
+      summary: Detalle de escandallo
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Receta encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '422':
+          $ref: '#/components/responses/DomainError'
+
+  /api/inventory:
+    get:
+      summary: Stock actual
+      responses:
+        '200':
+          description: Productos con stock.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+  /api/inventory/movements:
+    get:
+      summary: Movimientos de stock recientes
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Listado de movimientos.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StockMovement'
+
+  /api/inventory/waste:
+    post:
+      summary: Registrar merma
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [productId, quantity]
+              properties:
+                productId:
+                  type: integer
+                quantity:
+                  type: integer
+                  minimum: 1
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Merma registrada.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  productId:
+                    type: integer
+                  stock:
+                    type: integer
+        '409':
+          $ref: '#/components/responses/StockConflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
 
   /api/products:
     get:
@@ -363,3 +487,90 @@ components:
                 type: string
               name:
                 type: string
+
+    SettleResult:
+      type: object
+      properties:
+        tableId:
+          type: integer
+        orderIds:
+          type: array
+          items:
+            type: integer
+        payment:
+          type: object
+          properties:
+            provider:
+              type: string
+            status:
+              type: string
+            transactionId:
+              type: string
+
+    Recipe:
+      type: object
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        name:
+          type: string
+        salePrice:
+          type: number
+        theoreticalCost:
+          type: number
+        margin:
+          type: number
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              ingredientName:
+                type: string
+              quantity:
+                type: number
+              unit:
+                type: string
+              unitCost:
+                type: number
+
+    StockMovement:
+      type: object
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        productName:
+          type: string
+        type:
+          type: string
+          enum: [sale, waste, adjust]
+        quantity:
+          type: integer
+        reason:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+
+    Health:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, down]
+        checks:
+          type: object
+          properties:
+            database:
+              type: string
+            redis:
+              type: string
+        timestamp:
+          type: string
+          format: date-time

@@ -18,10 +18,10 @@ libre → ocupada (al crear pedido) → cuenta pedida (pedir cuenta) → libre (
 
 | Acción UI | Efecto |
 |-----------|--------|
-| Tomar / añadir pedido | Crea orden; mesa → `occupied` |
+| Tomar / añadir pedido | Crea orden; reserva stock + movimiento `sale`; mesa → `occupied` |
 | Pedir cuenta | Genera cuenta con desglose fiscal; mesa → `billRequested` |
 | Ver cuenta | Misma cuenta (subtotal + IVA/IGV + total) |
-| Cobrar | Marca pedidos `paid`; mesa → `free` |
+| Cobrar | Stub de pasarela → marca pedidos `paid`; mesa → `free`; responde payment |
 
 ---
 
@@ -61,6 +61,12 @@ Base: `/api`. Spec completa: `openapi.yaml`.
 | `PATCH` | `/orders/{id}/status` | Cambiar estado de pedido | 204, 404, 422 |
 | `GET` | `/establishment` | País, moneda, tasa e impuesto actuales | 200 |
 | `PUT` | `/establishment` | Cambiar país fiscal del local (`country`) | 200, 422 |
+| `GET` | `/recipes` | Escandallos con coste teórico y margen | 200 |
+| `GET` | `/recipes/{id}` | Detalle de receta | 200, 422 |
+| `GET` | `/inventory` | Stock actual | 200 |
+| `GET` | `/inventory/movements` | Movimientos de stock recientes | 200 |
+| `POST` | `/inventory/waste` | Registrar merma (`productId`, `quantity`, `reason?`) | 200, 409, 422 |
+| `GET` | `/health` | Healthcheck DB + Redis | 200, 503 |
 
 ### Mapeo de excepciones → HTTP
 
@@ -106,11 +112,12 @@ Laravel hexagonal: Domain (reglas + puertos) → Application (casos de uso) → 
 
 ### Capas
 
-- **Domain** (`app/Orders/Domain/`): `Order`, enums (`OrderStatus`, `TableStatus`), `OrderCreatedEvent`, `InsufficientStockException`, puertos (`OrderRepositoryInterface`, `TableRepositoryInterface`, `ProductRepositoryInterface`, `TaxCalculatorInterface`). Sin dependencias de Laravel/Eloquent.
-- **Application** (`app/Orders/Application/`): casos de uso (`CreateOrderUseCase`, `RequestBillUseCase`, `SettleTableUseCase`, `ChangeOrderStatusUseCase`, `ListTablesUseCase`, `ListProductsUseCase`, `ListRecentOrdersUseCase`). Orquestan dominio + infraestructura.
+- **Domain** (`app/Orders/Domain/`): `Order`, enums (`OrderStatus`, `TableStatus`), `OrderCreatedEvent`, `InsufficientStockException`, `RecipeCost`, `PaymentResult`, puertos (`OrderRepositoryInterface`, `TableRepositoryInterface`, `ProductRepositoryInterface`, `RecipeRepositoryInterface`, `InventoryRepositoryInterface`, `PaymentGatewayInterface`, `TaxCalculatorInterface`). Sin dependencias de Laravel/Eloquent.
+- **Application** (`app/Orders/Application/`): casos de uso (mesa, pedidos, recipes, inventory/waste, settle+pago). Orquestan dominio + infraestructura.
 - **Infrastructure**:
-  - `Http/`: controllers (delgados, inyectan use cases).
-  - `Persistence/`: repositorios Eloquent.
+  - `Http/`: controllers (delgados, inyectan use cases) + `HealthController`.
+  - `Persistence/`: repositorios Eloquent (orders, tables, products, recipes, inventory).
+  - `Payment/`: `FakePaymentGateway` (stub TPV).
   - `Tax/`: calculadoras concretas + `TaxCountryConfig`.
   - `Queue/`: listeners async.
 
@@ -129,11 +136,11 @@ Laravel hexagonal: Domain (reglas + puertos) → Application (casos de uso) → 
 
 ## Tests
 
-- **Pest**: 17 tests, 54 assertions, todos verdes.
-  - `tests/Unit/`: dominio (Order, InsufficientStock, calculadoras de impuesto).
-  - `tests/Feature/`: ciclo de mesa end-to-end (`TableLifecycleTest`) — cubre `CreateOrder` + `RequestBill` + `Settle` + cambio de país.
+- **Pest**: unit + feature (ciclo de mesa, stock, recetas, merma, pasarela stub, health).
+  - `tests/Unit/`: dominio (Order, InsufficientStock, RecipeCost, calculadoras de impuesto).
+  - `tests/Feature/`: ciclo de mesa, inventory/waste, recipes, payment settle, health.
 - **PHPStan**: nivel 5, baseline gestionado en `phpstan-baseline.neon`. Ejecutar con `--memory-limit=1G` por defecto del proyecto.
-- **Cypress**: configurado pero sin specs (esqueleto en `cypress/`).
+- **Cypress**: specs en `frontend/cypress/e2e/` (ciclo mesa + país fiscal MX, con intercepts).
 
 ### Cobertura de tests manual (no automatizada)
 
@@ -204,6 +211,17 @@ curl -X PUT http://localhost:8080/api/establishment \
 
 # Pedir cuenta con IVA mexicano
 curl -X POST http://localhost:8080/api/tables/1/request-bill
+
+# Healthcheck
+curl http://localhost:8080/api/health
+
+# Escandallos
+curl http://localhost:8080/api/recipes
+
+# Merma
+curl -X POST http://localhost:8080/api/inventory/waste \
+  -H "Content-Type: application/json" \
+  -d '{"productId":1,"quantity":1,"reason":"rotura"}'
 ```
 
 ### Probar la cola del ERP

@@ -29,8 +29,6 @@ class TableController extends Controller
 
     public function settle(int $id): JsonResponse
     {
-        $this->settleTableUseCase->execute($id);
-
-        return response()->json(status: 204);
+        return response()->json($this->settleTableUseCase->execute($id));
     }
 }

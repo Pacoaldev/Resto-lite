@@ -23,6 +23,18 @@ class AppServiceProvider extends ServiceProvider
             \App\Orders\Domain\ProductRepositoryInterface::class,
             \App\Orders\Infrastructure\Persistence\EloquentProductRepository::class
         );
+        $this->app->bind(
+            \App\Orders\Domain\RecipeRepositoryInterface::class,
+            \App\Orders\Infrastructure\Persistence\EloquentRecipeRepository::class
+        );
+        $this->app->bind(
+            \App\Orders\Domain\InventoryRepositoryInterface::class,
+            \App\Orders\Infrastructure\Persistence\EloquentInventoryRepository::class
+        );
+        $this->app->bind(
+            \App\Orders\Domain\PaymentGatewayInterface::class,
+            \App\Orders\Infrastructure\Payment\FakePaymentGateway::class
+        );
 
         $this->app->bind(
             \App\Orders\Domain\TaxCalculatorInterface::class,

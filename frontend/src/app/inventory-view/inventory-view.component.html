@@ -5,6 +5,10 @@
     <p class="error">{{ loadError() }}</p>
   }
 
+  @if (actionError()) {
+    <p class="error">{{ actionError() }}</p>
+  }
+
   @if (!loadError() && products().length === 0) {
     <p class="empty">No hay productos cargados.</p>
   }
@@ -16,6 +20,7 @@
           <th>Producto</th>
           <th>Precio</th>
           <th>Stock Disponible</th>
+          <th>Merma</th>
         </tr>
       </thead>
       <tbody>
@@ -27,6 +32,31 @@
               <span class="stock-badge" [ngClass]="stockClass(product.stock)">
                 {{ product.stock }} uds
               </span>
+            </td>
+            <td class="waste-cell">
+              <input
+                type="number"
+                min="1"
+                class="waste-qty"
+                [(ngModel)]="wasteQty[product.id]"
+                [ngModelOptions]="{standalone: true}"
+                [placeholder]="'1'"
+              />
+              <input
+                type="text"
+                class="waste-reason"
+                [(ngModel)]="wasteReason[product.id]"
+                [ngModelOptions]="{standalone: true}"
+                placeholder="Motivo"
+              />
+              <button
+                type="button"
+                class="waste-btn"
+                [disabled]="busyProductId() === product.id"
+                (click)="registerWaste(product)"
+              >
+                Registrar merma
+              </button>
             </td>
           </tr>
         }

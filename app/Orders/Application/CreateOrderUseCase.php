@@ -3,6 +3,7 @@
 namespace App\Orders\Application;
 
 use App\Orders\Domain\InsufficientStockException;
+use App\Orders\Domain\InventoryRepositoryInterface;
 use App\Orders\Domain\Order;
 use App\Orders\Domain\OrderCreatedEvent;
 use App\Orders\Domain\OrderRepositoryInterface;
@@ -12,7 +13,8 @@ use Illuminate\Support\Facades\DB;
 class CreateOrderUseCase
 {
     public function __construct(
-        private OrderRepositoryInterface $orderRepository
+        private OrderRepositoryInterface $orderRepository,
+        private InventoryRepositoryInterface $inventoryRepository
     ) {
     }
 
@@ -47,7 +49,6 @@ class CreateOrderUseCase
      */
     private function reserveStock(array $items): void
     {
-        // ponytail: stock lives in products table; upgrade to InventoryRepository if multi-warehouse appears
         foreach ($items as $item) {
             $product = DB::table('products')
                 ->where('name', $item['name'])
@@ -67,6 +68,8 @@ class CreateOrderUseCase
                     'stock' => $available - $quantity,
                     'updated_at' => now(),
                 ]);
+
+            $this->inventoryRepository->recordSale((int) $product->id, $quantity);
         }
     }
 }
