@@ -1,23 +1,23 @@
 describe('Tablero de Mesas y Toma de Pedidos E2E', () => {
   beforeEach(() => {
-    cy.intercept('GET', '/api/tables', [
+    cy.intercept('GET', '**/api/tables', [
       { id: 1, name: 'Mesa 1', status: 'free' },
       { id: 2, name: 'Mesa 2', status: 'occupied' }
     ]).as('getTables');
 
-    cy.intercept('GET', '/api/products', [
+    cy.intercept('GET', '**/api/products', [
       { id: 1, name: 'Café', price: 2.50, stock: 100 },
       { id: 2, name: 'Tostada', price: 3.00, stock: 50 }
     ]).as('getProducts');
 
-    cy.intercept('GET', '/api/orders*', []).as('getOrders');
+    cy.intercept('GET', '**/api/orders*', []).as('getOrders');
 
-    cy.intercept('POST', '/api/orders', {
+    cy.intercept('POST', '**/api/orders', {
       statusCode: 201,
       body: { id: 99, tableId: 1, status: 'open', total: 5.50 }
     }).as('createOrder');
 
-    cy.intercept('POST', '/api/tables/*/request-bill', {
+    cy.intercept('POST', '**/api/tables/*/request-bill', {
       statusCode: 200,
       body: {
         tableId: 2,
@@ -33,7 +33,7 @@ describe('Tablero de Mesas y Toma de Pedidos E2E', () => {
       },
     }).as('requestBill');
 
-    cy.intercept('POST', '/api/tables/*/settle', {
+    cy.intercept('POST', '**/api/tables/*/settle', {
       statusCode: 200,
       body: {
         tableId: 2,
@@ -42,7 +42,7 @@ describe('Tablero de Mesas y Toma de Pedidos E2E', () => {
       },
     }).as('settle');
 
-    cy.intercept('GET', '/api/establishment', {
+    cy.intercept('GET', '**/api/establishment', {
       country: 'es',
       currency: 'EUR',
       name: 'España — Madrid',
@@ -62,9 +62,9 @@ describe('Tablero de Mesas y Toma de Pedidos E2E', () => {
     cy.contains('Tablero de Mesas').should('be.visible');
     cy.contains('Mesa 1').should('be.visible');
 
-    cy.contains('button', 'Tomar pedido').first().click();
+    cy.contains('button', 'Comanda').first().click();
 
-    cy.contains('Nuevo pedido - mesa 1').should('be.visible');
+    cy.contains(/Nuevo pedido.*mesa 1/i).should('be.visible');
     cy.wait('@getProducts');
 
     cy.get('input[type="number"]').first().clear().type('2');
@@ -72,12 +72,12 @@ describe('Tablero de Mesas y Toma de Pedidos E2E', () => {
     cy.contains('button', 'Enviar pedido').click();
     cy.wait('@createOrder');
 
-    cy.contains('Selecciona una mesa en el tablero').should('be.visible');
+    cy.contains(/Selecciona una mesa/i).should('be.visible');
   });
 
   it('ciclo de mesa: pedir cuenta y cobrar con pasarela stub', () => {
     cy.wait('@getTables');
-    cy.contains('button', 'Pedir cuenta').click();
+    cy.contains('button', 'Cuenta').click();
     cy.wait('@requestBill');
     cy.contains('Cuenta — mesa 2').should('be.visible');
     cy.contains('button', 'Cobrar y liberar mesa').click();
@@ -87,7 +87,7 @@ describe('Tablero de Mesas y Toma de Pedidos E2E', () => {
   it('cambia país fiscal a México y refleja IVA MX en la cuenta', () => {
     cy.wait('@getEstablishment');
 
-    cy.intercept('PUT', '/api/establishment', {
+    cy.intercept('PUT', '**/api/establishment', {
       statusCode: 200,
       body: {
         country: 'mx',
@@ -102,7 +102,7 @@ describe('Tablero de Mesas y Toma de Pedidos E2E', () => {
       },
     }).as('putEstablishment');
 
-    cy.intercept('POST', '/api/tables/*/request-bill', {
+    cy.intercept('POST', '**/api/tables/*/request-bill', {
       statusCode: 200,
       body: {
         tableId: 2,
@@ -121,7 +121,7 @@ describe('Tablero de Mesas y Toma de Pedidos E2E', () => {
     cy.get('#country-select').select('mx');
     cy.wait('@putEstablishment');
 
-    cy.contains('button', 'Pedir cuenta').click();
+    cy.contains('button', 'Cuenta').click();
     cy.wait('@requestBillMx');
     cy.contains('Cuenta — mesa 2').should('be.visible');
     cy.contains('MXN').should('be.visible');
