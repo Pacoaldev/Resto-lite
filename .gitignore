@@ -17,6 +17,9 @@ yarn-error.log
 /.idea
 /.vscode
 /.atl
+/.codegraph
+/.engram
+*.code-workspace
 /informacion_util
 comandos.md
 start.ps1
