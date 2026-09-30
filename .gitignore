@@ -17,6 +17,10 @@ yarn-error.log
 /.idea
 /.vscode
 /.atl
+/.codegraph
+/.engram
+/.bypasser.json
+*.code-workspace
 /informacion_util
 comandos.md
 start.ps1
@@ -40,6 +44,16 @@ stop.ps1
 /frontend/yarn-error.log
 /frontend/.env
 
+# Java (backend-java)
+/backend-java/target/
+/backend-java/*.class
+/backend-java/.gradle/
+/backend-java/build/
+
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# bypasser-ai
+.bypasser.log
+.bypasser.state.json
